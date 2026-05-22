@@ -1,0 +1,2 @@
+[console_scripts]
+growth-mcp = growth_mcp.server:main
