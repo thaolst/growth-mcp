@@ -1,16 +1,24 @@
 # Growth MCP
 
-MCP server cho growth marketing — đóng gói domain knowledge thành tools Claude có thể gọi trực tiếp trong chat.
+<p align="left">
+  <img src="https://img.shields.io/github/v/release/thaolst/growth-mcp?label=version&color=4ade80&style=flat-square" alt="version" />
+  <img src="https://img.shields.io/github/license/thaolst/growth-mcp?color=60a5fa&style=flat-square" alt="license" />
+  <img src="https://img.shields.io/github/last-commit/thaolst/growth-mcp?color=a78bfa&style=flat-square" alt="last commit" />
+  <img src="https://img.shields.io/github/stars/thaolst/growth-mcp?style=flat-square&color=facc15&logo=github" alt="stars" />
+  <img src="https://img.shields.io/badge/language-VI%20%2B%20EN-blue?style=flat-square" alt="language" />
+</p>
+
+> MCP server cho growth marketing — đóng gói domain knowledge thành tools Claude có thể gọi trực tiếp trong chat.
 
 ---
+
+# Tiếng Việt
 
 ## Giải quyết vấn đề gì?
 
 Growth PM thường mất thời gian làm đi làm lại các phân tích lặp: tính drop rate từ cohort data, nhớ intervention nào phù hợp budget nào, tra công thức sample size, design voucher theo segment...
 
 **growth-mcp** đóng gói những logic này lại. Claude gọi trực tiếp trong chat, trả kết quả có thể dùng ngay — không còn trả lời chung chung.
-
----
 
 ## Minh hoạ thực tế
 
@@ -65,8 +73,6 @@ Growth PM thường mất thời gian làm đi làm lại các phân tích lặp
 **Claude trả lời:**
 > Cần **30.307 users/variant**, tổng **60.614 users** (power 90%, α=5%). Plan traffic trước, không chạy rồi mới tính.
 
----
-
 ## Cài đặt
 
 ```bash
@@ -109,8 +115,6 @@ Thêm vào `.cursor/mcp.json`:
 }
 ```
 
----
-
 ## Tools
 
 | Tool | Làm gì | Input chính |
@@ -126,30 +130,34 @@ Thêm vào `.cursor/mcp.json`:
 
 Tool trả output dạng framework/recommendation, không kéo real data từ database. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
 
+## 👤 Tác giả
+
+**Le Song Tien Thao (Tara)** — Growth Marketer. Xây prompts, bots, và workflows cho growth marketing thực chiến.
+
+🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
+
+*Nếu repo này hữu ích, [star nhé](https://github.com/thaolst/growth-mcp) ⭐*
+
 ---
 
 ---
 
 # Growth MCP
 
-MCP server for growth marketing — packaging domain knowledge into tools Claude can call directly in chat.
-
----
+> MCP server for growth marketing — packaging domain knowledge into tools Claude can call directly in chat.
 
 ## What problem does it solve?
 
-Growth PMs often spend time repeating the same analyses: calculating drop rates from cohort data, remembering which interventions fit which budget level, looking up sample size formulas, designing vouchers by segment...
+Growth PMs often spend time repeating the same analyses: calculating drop rates from cohort data, remembering which interventions fit which budget, looking up sample size formulas, designing vouchers by segment...
 
 **growth-mcp** packages this logic so Claude can call it directly in chat and return actionable output — not generic advice.
-
----
 
 ## Real examples
 
 ### 1. Retention cohort analysis
 
 **You ask:**
-> "March cohort: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Small budget. Analyse this for me."
+> "March cohort: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Small budget. Analyse this."
 
 **Claude responds:**
 > Biggest drop at **W0→W1: 38%** — this is an early activation problem, not a retention problem. Later-stage retention (W1→W2: 33.9%, W2→W3: 31.7%) is actually quite stable.
@@ -197,8 +205,6 @@ Growth PMs often spend time repeating the same analyses: calculating drop rates 
 **Claude responds:**
 > You need **30,307 users/variant**, total **60,614 users** (90% power, α=5%). Plan your traffic allocation before running, not after.
 
----
-
 ## Installation
 
 ```bash
@@ -241,8 +247,6 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
----
-
 ## Tools
 
 | Tool | What it does | Key inputs |
@@ -258,8 +262,16 @@ Add to `.cursor/mcp.json`:
 
 Tools return framework-level output and recommendations — they don't pull real data from a database. Meant to **speed up thinking**, not replace a data analyst.
 
+## 👤 Author
+
+**Le Song Tien Thao (Tara)** — Growth Marketer. Building prompts, bots, and workflows for real growth marketing work.
+
+🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
+
+*If this is useful, [star the repo](https://github.com/thaolst/growth-mcp) ⭐*
+
 ---
 
 ## License
 
-MIT
+MIT — use freely, share widely.
