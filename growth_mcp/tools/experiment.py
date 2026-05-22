@@ -3,12 +3,7 @@
 import math
 
 
-# ---------------------------------------------------------------------------
-# Internal stats helpers
-# ---------------------------------------------------------------------------
-
 def _erf(x: float) -> float:
-    """Abramowitz & Stegun approximation of the error function (max error 1.5e-7)."""
     a1, a2, a3, a4, a5 = 0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429
     p = 0.3275911
     sign = 1 if x >= 0 else -1
@@ -19,33 +14,22 @@ def _erf(x: float) -> float:
 
 
 def _normal_cdf(x: float) -> float:
-    """Standard normal CDF."""
     return 0.5 * (1.0 + _erf(x / math.sqrt(2)))
 
 
-def _normal_ppf(p: float) -> float:
-    """Inverse normal CDF (percent-point function) via rational approximation.
+def _rational_ppf(t: float) -> float:
+    c = [2.515517, 0.802853, 0.010328]
+    d = [1.432788, 0.189269, 0.001308]
+    return t - (c[0] + c[1] * t + c[2] * t * t) / (1.0 + d[0] * t + d[1] * t * t + d[2] * t ** 3)
 
-    Handles the full (0, 1) range. Used instead of hard-coded z values so
-    calculate_sample_size works for arbitrary significance and power levels.
-    """
+
+def _normal_ppf(p: float) -> float:
     if p <= 0 or p >= 1:
         raise ValueError(f"p must be in (0, 1), got {p}")
     if p < 0.5:
         return -_rational_ppf(math.sqrt(-2.0 * math.log(p)))
     return _rational_ppf(math.sqrt(-2.0 * math.log(1.0 - p)))
 
-
-def _rational_ppf(t: float) -> float:
-    """Peter Acklam's rational approximation for the upper tail."""
-    c = [2.515517, 0.802853, 0.010328]
-    d = [1.432788, 0.189269, 0.001308]
-    return t - (c[0] + c[1] * t + c[2] * t * t) / (1.0 + d[0] * t + d[1] * t * t + d[2] * t ** 3)
-
-
-# ---------------------------------------------------------------------------
-# Public functions
-# ---------------------------------------------------------------------------
 
 def analyze_test(
     control_metric: float,
@@ -55,6 +39,23 @@ def analyze_test(
     metric_name: str = "conversion",
 ) -> dict:
     """Analyze A/B test results using a two-proportion z-test."""
+    # --- Input validation ---
+    if 0 < control_metric <= 1 and 0 < treatment_metric <= 1:
+        return {
+            "error": (
+                "control_metric and treatment_metric look like rates (0–1). "
+                "Pass raw counts instead — e.g. 120 conversions, not 0.12."
+            )
+        }
+    if control_metric < 0 or treatment_metric < 0:
+        return {"error": "control_metric and treatment_metric must be >= 0."}
+    if control_sample <= 0 or treatment_sample <= 0:
+        return {"error": "Sample sizes must be positive integers."}
+    if control_metric > control_sample:
+        return {"error": f"control_metric ({control_metric}) cannot exceed control_sample ({control_sample})."}
+    if treatment_metric > treatment_sample:
+        return {"error": f"treatment_metric ({treatment_metric}) cannot exceed treatment_sample ({treatment_sample})."}
+
     p_control = control_metric / control_sample if control_sample else 0.0
     p_treatment = treatment_metric / treatment_sample if treatment_sample else 0.0
     total = control_sample + treatment_sample
@@ -73,45 +74,25 @@ def analyze_test(
     significant = p_value < 0.05
 
     if significant and relative_lift > 0:
-        verdict = "Treatment wins"
-        next_action = "Launch treatment variant"
+        verdict, next_action = "Treatment wins", "Launch treatment variant"
     elif significant and relative_lift < 0:
-        verdict = "Control wins"
-        next_action = "Keep control, iterate on treatment"
+        verdict, next_action = "Control wins", "Keep control, iterate on treatment"
     else:
-        verdict = "Not conclusive — run longer or increase sample size"
-        next_action = "Increase sample size and re-run"
+        verdict, next_action = "Not conclusive — run longer or increase sample size", "Increase sample size and re-run"
 
     return {
         "metric": metric_name,
-        "control": {
-            "value": round(control_metric, 2),
-            "sample": control_sample,
-            "rate_pct": round(p_control * 100, 2),
-        },
-        "treatment": {
-            "value": round(treatment_metric, 2),
-            "sample": treatment_sample,
-            "rate_pct": round(p_treatment * 100, 2),
-        },
-        "lift": {
-            "absolute": round(absolute_lift, 2),
-            "relative_pct": round(relative_lift, 2),
-        },
-        "statistics": {
-            "z_score": round(z, 4),
-            "p_value": p_value,
-            "significant_at_95": significant,
-        },
+        "control": {"value": round(control_metric, 2), "sample": control_sample, "rate_pct": round(p_control * 100, 2)},
+        "treatment": {"value": round(treatment_metric, 2), "sample": treatment_sample, "rate_pct": round(p_treatment * 100, 2)},
+        "lift": {"absolute": round(absolute_lift, 2), "relative_pct": round(relative_lift, 2)},
+        "statistics": {"z_score": round(z, 4), "p_value": p_value, "significant_at_95": significant},
         "verdict": verdict,
         "next_steps": [
             next_action,
             "Segment analysis to check for Simpson's paradox",
             "Calculate novelty effect: compare new vs returning users",
         ],
-        "prompt_reference": (
-            "https://github.com/thaolst/ai-growth-prompts/tree/main/07-experiment-design"
-        ),
+        "prompt_reference": "https://github.com/thaolst/ai-growth-prompts/tree/main/07-experiment-design",
     }
 
 
@@ -121,17 +102,21 @@ def calculate_sample_size(
     significance: float = 0.05,
     power: float = 0.80,
 ) -> dict:
-    """Estimate required sample size per variant using proper inverse-normal CDF.
+    """Estimate required sample size per variant."""
+    if not (0.0 < baseline_rate < 1.0):
+        return {"error": "baseline_rate must be between 0 and 1 exclusive (e.g. 0.05 for 5%)."}
+    if not (0.0 < minimum_detectable_effect < 1.0):
+        return {"error": "minimum_detectable_effect must be between 0 and 1 exclusive (e.g. 0.10 for 10% lift)."}
+    if not (0.0 < significance < 0.5):
+        return {"error": "significance must be between 0 and 0.5 (e.g. 0.05)."}
+    if not (0.5 < power < 1.0):
+        return {"error": "power must be between 0.5 and 1.0 (e.g. 0.80)."}
 
-    Works for arbitrary significance (e.g. 0.01, 0.05, 0.10) and power
-    (e.g. 0.80, 0.90, 0.95) — not limited to hard-coded z values.
-    """
-    z_alpha = _normal_ppf(1.0 - significance / 2)  # two-tailed
+    z_alpha = _normal_ppf(1.0 - significance / 2)
     z_beta = _normal_ppf(power)
 
     p1 = baseline_rate
-    p2 = baseline_rate * (1 + minimum_detectable_effect)
-    p2 = min(p2, 1.0)  # cap at 100%
+    p2 = min(baseline_rate * (1 + minimum_detectable_effect), 1.0)
     p_bar = (p1 + p2) / 2
 
     numerator = (
@@ -139,9 +124,7 @@ def calculate_sample_size(
         + z_beta * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))
     ) ** 2
     denominator = (p2 - p1) ** 2
-
-    n = numerator / denominator
-    per_variant = math.ceil(n)
+    per_variant = math.ceil(numerator / denominator)
 
     return {
         "baseline_rate_pct": round(baseline_rate * 100, 2),
