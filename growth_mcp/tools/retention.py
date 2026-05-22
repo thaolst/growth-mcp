@@ -27,27 +27,31 @@ def analyze_cohort(cohort_data: dict[str, float], campaign_level: str = "S") -> 
     if level not in INTERVENTIONS:
         level = "S"
 
-    periods = sorted(cohort_data.keys())
+    if not isinstance(cohort_data, dict) or len(cohort_data) < 2:
+        return {"error": "cohort_data must be a dict with at least 2 period keys."}
 
-    if len(periods) < 2:
-        return {
-            "error": "cohort_data must have at least 2 time periods to compute drop rates.",
-            "received_periods": periods,
-        }
+    for k, v in cohort_data.items():
+        if not isinstance(v, (int, float)) or not (0.0 <= v <= 1.0):
+            return {
+                "error": (
+                    f'Retention values must be between 0.0 and 1.0. '
+                    f'Got "{k}": {v!r}'
+                )
+            }
+
+    periods = sorted(cohort_data.keys())
 
     drops: dict[str, float] = {}
     for i in range(1, len(periods)):
         prev, curr = periods[i - 1], periods[i]
         prev_val = cohort_data[prev]
         if prev_val == 0:
-            continue  # avoid division by zero for a zeroed-out cohort period
+            continue
         drop = (prev_val - cohort_data[curr]) / prev_val
         drops[f"{prev}->{curr}"] = round(drop * 100, 1)
 
     if not drops:
-        return {
-            "error": "Could not compute any drop rates. Check that week_0 retention is > 0.",
-        }
+        return {"error": "Could not compute drop rates. Check that week_0 retention is > 0."}
 
     biggest_drop_period = max(drops, key=drops.__getitem__)
     biggest_drop_pct = drops[biggest_drop_period]
@@ -63,10 +67,7 @@ def analyze_cohort(cohort_data: dict[str, float], campaign_level: str = "S") -> 
         "cohort_summary": {
             "periods": len(periods),
             "latest_retention_pct": latest_retention,
-            "biggest_drop": {
-                "period": biggest_drop_period,
-                "drop_pct": biggest_drop_pct,
-            },
+            "biggest_drop": {"period": biggest_drop_period, "drop_pct": biggest_drop_pct},
             "all_drops": drops,
             "data": cohort_data,
         },
@@ -89,6 +90,13 @@ def predict_churn(
     redemption_rate: float = 0.0,
 ) -> dict:
     """Identify churn risk segments based on activity data."""
+    if avg_last_active_days < 0:
+        return {"error": "avg_last_active_days must be >= 0."}
+    if total_users <= 0:
+        return {"error": "total_users must be a positive integer."}
+    if not (0.0 <= redemption_rate <= 1.0):
+        return {"error": "redemption_rate must be between 0.0 and 1.0."}
+
     if avg_last_active_days > 60:
         risk, risk_reason = "high", "Users inactive >60 days"
     elif avg_last_active_days > 30:
@@ -99,11 +107,8 @@ def predict_churn(
         risk, risk_reason = "healthy", "Users are active"
 
     channel = (
-        "in-app push"
-        if risk in ("low", "healthy")
-        else "in-app push + SMS/email"
+        "in-app push" if risk in ("low", "healthy") else "in-app push + SMS/email"
     )
-
     points_message = (
         f"Average {avg_points_balance:.0f} points unused — use as re-engagement hook"
         if avg_points_balance > 0
@@ -116,14 +121,8 @@ def predict_churn(
         "churn_risk": risk,
         "risk_reason": risk_reason,
         "suggested_offer": CHURN_OFFERS[risk],
-        "reengagement": {
-            "channel": channel,
-            "urgency": "high" if risk == "high" else "medium",
-        },
-        "points_leverage": {
-            "has_unused_points": avg_points_balance > 0,
-            "message": points_message,
-        },
+        "reengagement": {"channel": channel, "urgency": "high" if risk == "high" else "medium"},
+        "points_leverage": {"has_unused_points": avg_points_balance > 0, "message": points_message},
         "redemption_rate_pct": round(redemption_rate * 100, 1),
         "prompt_reference": (
             "https://github.com/thaolst/ai-growth-prompts/tree/main/06-retention-strategy"
