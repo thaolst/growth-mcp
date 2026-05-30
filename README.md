@@ -10,8 +10,6 @@
 
 > MCP server cho growth marketing — đóng gói domain knowledge thành tools Claude có thể gọi trực tiếp trong chat.
 
----
-
 # Tiếng Việt
 
 ## Giải quyết vấn đề gì?
@@ -25,7 +23,7 @@ Growth PM thường mất thời gian làm đi làm lại các phân tích lặp
 ### 1. Phân tích retention cohort
 
 **Bạn hỏi:**
-> "Cohort tháng 3: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Budget nhỏ. Phân tích giúp tôi."
+> "Cohort tháng 3: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Budget nhỏ. Phân tích giúp mình."
 
 **Claude trả lời:**
 > Drop lớn nhất ở **W0→W1: 38%** — đây là early activation problem, không phải retention problem. Retention về sau (W1→W2: 33.9%, W2→W3: 31.7%) thực ra khá ổn định.
@@ -137,10 +135,6 @@ Tool trả output dạng framework/recommendation, không kéo real data từ da
 🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
 
 *Nếu repo này hữu ích, [star nhé](https://github.com/thaolst/growth-mcp) ⭐*
-
----
-
----
 
 # Growth MCP
 
@@ -269,8 +263,6 @@ Tools return framework-level output and recommendations — they don't pull real
 🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
 
 *If this is useful, [star the repo](https://github.com/thaolst/growth-mcp) ⭐*
-
----
 
 ## License
 
