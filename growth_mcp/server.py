@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment
+from growth_mcp.tools import campaign, retention, experiment, growth
 
 mcp = FastMCP(
     "growth-mcp",
@@ -221,6 +221,65 @@ def estimate_sample_size(
 def main():
     mcp.run()
 
+
+
+@mcp.tool()
+def suggest_channel_mix(
+    objective: str,
+    budget_level: str,
+    available_channels: str | None = None,
+) -> str:
+    """Suggest channel allocation for a growth campaign.
+
+    Args:
+        objective: Campaign objective — acquisition, activation, retention, reactivation, monetization
+        budget_level: S (< 50M VND), M (50-200M VND), L (200M+ VND)
+        available_channels: Optional comma-separated list of available channels
+    """
+    try:
+        channels = [c.strip() for c in available_channels.split(",") if c.strip()] if available_channels else None
+        result = growth.suggest_channel_mix(objective, budget_level, channels)
+        return _ok(result)
+    except Exception as e:
+        return _err(f"suggest_channel_mix failed: {e}")
+
+
+@mcp.tool()
+def forecast_cohort(
+    cohort_data: str,
+    forecast_periods: int = 3,
+) -> str:
+    """Forecast future retention periods based on historical cohort data.
+
+    Args:
+        cohort_data: JSON string of period->retention dict. E.g. '{"D1": 0.6, "D7": 0.4, "D30": 0.22}'
+        forecast_periods: Number of future periods to forecast (default 3)
+    """
+    try:
+        import json as _json
+        data = _json.loads(cohort_data)
+        result = growth.forecast_cohort(data, forecast_periods)
+        return _ok(result)
+    except Exception as e:
+        return _err(f"forecast_cohort failed: {e}")
+
+
+@mcp.tool()
+def segment_users(
+    objective: str,
+    context: str | None = None,
+) -> str:
+    """Suggest user segmentation framework based on campaign objective.
+
+    Args:
+        objective: Campaign objective — acquisition, retention, reactivation, monetization
+        context: Optional context about your product or user base
+    """
+    try:
+        result = growth.segment_users(objective, context)
+        return _ok(result)
+    except Exception as e:
+        return _err(f"segment_users failed: {e}")
 
 if __name__ == "__main__":
     main()
