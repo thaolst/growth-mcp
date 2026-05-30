@@ -1,6 +1,6 @@
 [project]
 name = "growth-mcp"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server for growth marketing — campaign design, retention analysis, churn prediction"
 authors = [{ name = "Tara Le", email = "tienthaotara@gmail.com" }]
 license = { text = "MIT" }
