@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment
 
 mcp = FastMCP(
     "growth-mcp",
@@ -216,6 +216,59 @@ def estimate_sample_size(
         return _ok(result)
     except Exception as e:
         return _err(f"estimate_sample_size failed: {e}")
+
+
+@mcp.tool()
+def monitor_campaign(run_days: float, current_reach: int,
+                     current_redemptions: int, total_vouchers: int,
+                     total_budget: float = 0.0,
+                     planned_days: float = 7.0,
+                     target_reach: float = 0) -> str:
+    """Monitor an ongoing campaign — assess health and recommend real-time adjustments.
+
+    Tracks reach pace, redemption rate, budget burn, and voucher exhaustion.
+    Returns critical/warning/info alerts and prioritized actions.
+
+    Args:
+        run_days: Days the campaign has been running
+        current_reach: Number of users reached so far
+        current_redemptions: Number of redemptions so far
+        total_vouchers: Total vouchers allocated for the campaign
+        total_budget: Total campaign budget in VND (0 if unknown)
+        planned_days: Planned campaign duration in days
+        target_reach: Expected total reach (0 = auto-detect)
+    """
+    result = monitor.assess_campaign(
+        run_days, current_reach, current_redemptions,
+        total_vouchers, total_budget, planned_days, target_reach
+    )
+    return json.dumps(result, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def analyze_segment(segment_type: str, segment_size: int = 0,
+                    current_retention: float = 0.0,
+                    current_redemption_rate: float = 0.0,
+                    compare_segments: str = "") -> str:
+    """Analyze a user segment — profile, performance vs benchmarks, and targeting recommendations.
+
+    Compares current segment metrics against fintech benchmarks and recommends
+    the best mechanic, channel, and strategy for that segment.
+
+    Supported segments: new_user, active, lapsed, churned, high_spender, voucher_hunter
+
+    Args:
+        segment_type: Segment type (new_user, active, lapsed, churned, high_spender, voucher_hunter)
+        segment_size: Current segment size
+        current_retention: Current D7 retention (0-1, e.g. 0.3 for 30%)
+        current_redemption_rate: Current campaign redemption rate (0-1, e.g. 0.2 for 20%)
+        compare_segments: Optional comma-separated segments to compare against
+    """
+    result = segment.analyze_segment(
+        segment_type, segment_size, current_retention,
+        current_redemption_rate, compare_segments
+    )
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 def main():

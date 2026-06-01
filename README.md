@@ -119,6 +119,8 @@ Thêm vào `.cursor/mcp.json`:
 |---|---|---|
 | `design_campaign` | Brief campaign theo level S/M/L | level, objective, segment |
 | `suggest_voucher` | Voucher phù hợp segment | segment, objective, budget_level |
+| `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
+| `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Đánh giá nguy cơ churn | days_inactive, users, points |
 | `analyze_experiment` | Đọc kết quả A/B test | control/treatment counts + sample sizes |
