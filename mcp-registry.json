@@ -1,7 +1,7 @@
 {
   "name": "growth-mcp",
   "display_name": "Growth MCP",
-  "description": "MCP server for growth marketing — campaign design, retention analysis, churn prediction, A/B testing. Built from real fintech campaigns in Southeast Asia.",
+  "description": "MCP server for growth marketing: campaign design, retention analysis, churn prediction, A/B testing, segmentation. Built from real fintech loyalty campaigns in Southeast Asia.",
   "homepage": "https://github.com/thaolst/growth-mcp",
   "license": "MIT",
   "author": {
@@ -12,13 +12,18 @@
     "pip": "growth-mcp",
     "command": "growth-mcp"
   },
-  "tags": ["marketing", "growth", "fintech", "campaign", "retention", "ab-testing", "sea"],
+  "tags": ["marketing", "growth", "fintech", "campaign", "retention", "ab-testing", "loyalty", "sea"],
   "tools": [
     "design_campaign",
     "suggest_voucher",
-    "analyze_retention_cohort",
+    "analyze_retention",
     "predict_churn_risk",
-    "calculate_sample_size",
-    "analyze_ab_test"
+    "analyze_experiment",
+    "estimate_sample_size",
+    "monitor_campaign",
+    "analyze_segment",
+    "suggest_channel_mix",
+    "forecast_cohort",
+    "segment_users"
   ]
 }
