@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/language-VI%20%2B%20EN-blue?style=flat-square" alt="language" />
 </p>
 
-> MCP server cho growth marketing — đóng gói domain knowledge thành tools Claude có thể gọi trực tiếp trong chat.
+> MCP server cho growth marketing - đóng gói domain knowledge thành tools Claude có thể gọi trực tiếp trong chat.
 
 # Tiếng Việt
 
@@ -16,7 +16,7 @@
 
 Growth PM thường mất thời gian làm đi làm lại các phân tích lặp: tính drop rate từ cohort data, nhớ intervention nào phù hợp budget nào, tra công thức sample size, design voucher theo segment...
 
-**growth-mcp** đóng gói những logic này lại. Claude gọi trực tiếp trong chat, trả kết quả có thể dùng ngay — không còn trả lời chung chung.
+**growth-mcp** đóng gói những logic này lại. Claude gọi trực tiếp trong chat, trả kết quả có thể dùng ngay - không còn trả lời chung chung.
 
 ## Minh hoạ thực tế
 
@@ -26,7 +26,7 @@ Growth PM thường mất thời gian làm đi làm lại các phân tích lặp
 > "Cohort tháng 3: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Budget nhỏ. Phân tích giúp mình."
 
 **Claude trả lời:**
-> Drop lớn nhất ở **W0→W1: 38%** — đây là early activation problem, không phải retention problem. Retention về sau (W1→W2: 33.9%, W2→W3: 31.7%) thực ra khá ổn định.
+> Drop lớn nhất ở **W0→W1: 38%** - đây là early activation problem, không phải retention problem. Retention về sau (W1→W2: 33.9%, W2→W3: 31.7%) thực ra khá ổn định.
 >
 > Với budget S, nên tập trung vào W0→W1 trước:
 > - In-app push reminder trong 24h đầu
@@ -39,11 +39,11 @@ Growth PM thường mất thời gian làm đi làm lại các phân tích lặp
 > "Muốn reactivate lapsed users (inactive 30-60 ngày, từng order ≥3 lần). Budget khoảng 100M. Nên làm gì?"
 
 **Claude trả lời:**
-> **Campaign level M** — budget 50-200M VND, timeline 2-4 tuần. Channels: in-app push + paid social.
+> **Campaign level M** - budget 50-200M VND, timeline 2-4 tuần. Channels: in-app push + paid social.
 >
 > Với lapsed segment có lịch sử order tốt:
 > - **Fixed discount 40-50%**, không min spend
-> - Expiry **48 giờ** — tạo urgency, không để họ "để mai"
+> - Expiry **48 giờ** - tạo urgency, không để họ "để mai"
 
 ### 3. Churn risk + điểm thưởng
 
@@ -51,7 +51,7 @@ Growth PM thường mất thời gian làm đi làm lại các phân tích lặp
 > "Segment này 45 ngày chưa active, 12.000 users, trung bình còn 320 điểm chưa dùng. Nguy cơ thế nào?"
 
 **Claude trả lời:**
-> **Medium risk** — đang tiến gần ngưỡng churn. 320 điểm tích luỹ là hook tốt: nhắc điểm sắp hết hạn kết hợp offer nhỏ hiệu quả hơn discount đơn thuần.
+> **Medium risk** - đang tiến gần ngưỡng churn. 320 điểm tích luỹ là hook tốt: nhắc điểm sắp hết hạn kết hợp offer nhỏ hiệu quả hơn discount đơn thuần.
 
 ### 4. Đọc kết quả A/B test
 
@@ -132,7 +132,7 @@ Tool trả output dạng framework/recommendation, không kéo real data từ da
 
 ## 👤 Tác giả
 
-**Le Song Tien Thao (Tara)** — Growth Marketer. Xây prompts, bots, và workflows cho growth marketing thực chiến.
+**Le Song Tien Thao (Tara)** - Growth Marketer. Xây prompts, bots, và workflows cho growth marketing thực chiến.
 
 🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
 
@@ -140,13 +140,13 @@ Tool trả output dạng framework/recommendation, không kéo real data từ da
 
 # Growth MCP
 
-> MCP server for growth marketing — packaging domain knowledge into tools Claude can call directly in chat.
+> MCP server for growth marketing - packaging domain knowledge into tools Claude can call directly in chat.
 
 ## What problem does it solve?
 
 Growth PMs often spend time repeating the same analyses: calculating drop rates from cohort data, remembering which interventions fit which budget, looking up sample size formulas, designing vouchers by segment...
 
-**growth-mcp** packages this logic so Claude can call it directly in chat and return actionable output — not generic advice.
+**growth-mcp** packages this logic so Claude can call it directly in chat and return actionable output - not generic advice.
 
 ## Real examples
 
@@ -156,7 +156,7 @@ Growth PMs often spend time repeating the same analyses: calculating drop rates 
 > "March cohort: week_0=100%, week_1=62%, week_2=41%, week_3=28%, week_4=21%. Small budget. Analyse this."
 
 **Claude responds:**
-> Biggest drop at **W0→W1: 38%** — this is an early activation problem, not a retention problem. Later-stage retention (W1→W2: 33.9%, W2→W3: 31.7%) is actually quite stable.
+> Biggest drop at **W0→W1: 38%** - this is an early activation problem, not a retention problem. Later-stage retention (W1→W2: 33.9%, W2→W3: 31.7%) is actually quite stable.
 >
 > With a small budget, focus on W0→W1 first:
 > - In-app push reminder within the first 24h
@@ -169,11 +169,11 @@ Growth PMs often spend time repeating the same analyses: calculating drop rates 
 > "I want to reactivate lapsed users (inactive 30-60 days, had ≥3 orders). Budget around 100M. What should I do?"
 
 **Claude responds:**
-> **Campaign level M** — budget 50-200M VND, timeline 2-4 weeks. Channels: in-app push + paid social.
+> **Campaign level M** - budget 50-200M VND, timeline 2-4 weeks. Channels: in-app push + paid social.
 >
 > For a lapsed segment with a strong order history:
 > - **Fixed discount 40-50%**, no min spend
-> - Expiry **48 hours** — creates urgency
+> - Expiry **48 hours** - creates urgency
 
 ### 3. Churn risk + loyalty points
 
@@ -181,7 +181,7 @@ Growth PMs often spend time repeating the same analyses: calculating drop rates 
 > "This segment hasn't been active for 45 days, 12,000 users, average 320 unused points. How at risk are they?"
 
 **Claude responds:**
-> **Medium risk** — approaching the churn threshold. 320 accumulated points are a strong hook: reminding them their points are expiring combined with a small offer works better than a standalone discount.
+> **Medium risk** - approaching the churn threshold. 320 accumulated points are a strong hook: reminding them their points are expiring combined with a small offer works better than a standalone discount.
 
 ### 4. Reading A/B test results
 
@@ -256,11 +256,11 @@ Add to `.cursor/mcp.json`:
 
 ## Limitations
 
-Tools return framework-level output and recommendations — they don't pull real data from a database. Meant to **speed up thinking**, not replace a data analyst.
+Tools return framework-level output and recommendations - they don't pull real data from a database. Meant to **speed up thinking**, not replace a data analyst.
 
 ## 👤 Author
 
-**Le Song Tien Thao (Tara)** — Growth Marketer. Building prompts, bots, and workflows for real growth marketing work.
+**Le Song Tien Thao (Tara)** - Growth Marketer. Building prompts, bots, and workflows for real growth marketing work.
 
 🔗 [LinkedIn](https://linkedin.com/in/thaolst) · [Facebook](https://www.facebook.com/LeSongTienThao) · [X](https://x.com/thaolst) · [Substack](https://thaolst.substack.com/) · [Email](mailto:tienthaotara@gmail.com)
 
@@ -268,4 +268,4 @@ Tools return framework-level output and recommendations — they don't pull real
 
 ## License
 
-MIT — use freely, share widely.
+MIT - use freely, share widely.
