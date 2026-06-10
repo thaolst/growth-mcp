@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from growth_mcp.tools import campaign, retention, experiment
+from growth_mcp.tools import campaign, retention, experiment, voucher
 
 
 # ===========================================================================
@@ -257,3 +257,39 @@ class TestCalculateSampleSize:
 # Import pytest for approx
 # ---------------------------------------------------------------------------
 import pytest
+
+
+# ===========================================================================
+# voucher.optimize_voucher
+# ===========================================================================
+
+class TestOptimizeVoucher:
+    def test_fixed_ladder(self):
+        r = voucher.optimize_voucher(150000, 20, 15000, "fixed")
+        assert "error" not in r
+        assert len(r["voucher_ladder"]) == 3
+        assert r["voucher_ladder"][0]["discount_vnd"] == 7500
+        assert r["abuse_risk"] == "MEDIUM"
+
+    def test_percentage_capped(self):
+        r = voucher.optimize_voucher(150000, 100, 10000, "percentage")
+        assert "error" not in r
+        for tier in r["voucher_ladder"]:
+            pct = float(tier["discount"].rstrip("%"))
+            assert pct <= voucher.MAX_PCT_DISCOUNT
+
+    def test_low_risk(self):
+        r = voucher.optimize_voucher(1000000, 10, 50000, "fixed")
+        assert r["abuse_risk"] == "LOW"
+
+    def test_high_risk(self):
+        r = voucher.optimize_voucher(100000, 10, 20000, "fixed")
+        assert r["abuse_risk"] == "HIGH"
+
+    def test_invalid_type(self):
+        r = voucher.optimize_voucher(150000, 20, 15000, "bogus")
+        assert "error" in r
+
+    def test_invalid_aov(self):
+        r = voucher.optimize_voucher(0, 20, 15000)
+        assert "error" in r

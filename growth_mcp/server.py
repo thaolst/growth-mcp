@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher
 
 mcp = FastMCP(
     "growth-mcp",
@@ -67,6 +67,34 @@ def suggest_voucher(
         return _ok(result)
     except Exception as e:
         return _err(f"suggest_voucher failed: {e}")
+
+
+@mcp.tool()
+def optimize_voucher(
+    avg_order_value_vnd: int,
+    target_conversion_lift_pct: float,
+    budget_per_user_vnd: int,
+    voucher_type: Literal["fixed", "percentage"] = "fixed",
+) -> str:
+    """Design an optimized voucher ladder with tiered thresholds and abuse risk assessment.
+
+    Use this when you have concrete numbers (AOV, budget per user, target lift).
+    Use suggest_voucher instead when you only know the segment.
+
+    Args:
+        avg_order_value_vnd: Current average order value in VND
+        target_conversion_lift_pct: Target conversion lift in percent (e.g. 20 = +20%)
+        budget_per_user_vnd: Maximum budget per user in VND
+        voucher_type: "fixed" (VND cashback) or "percentage" (% discount, capped at 25%)
+    """
+    try:
+        result = voucher.optimize_voucher(
+            avg_order_value_vnd, target_conversion_lift_pct,
+            budget_per_user_vnd, voucher_type,
+        )
+        return _ok(result)
+    except Exception as e:
+        return _err(f"optimize_voucher failed: {e}")
 
 
 @mcp.tool()

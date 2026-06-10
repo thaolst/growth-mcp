@@ -119,12 +119,23 @@ Thêm vào `.cursor/mcp.json`:
 |---|---|---|
 | `design_campaign` | Brief campaign theo level S/M/L | level, objective, segment |
 | `suggest_voucher` | Voucher phù hợp segment | segment, objective, budget_level |
+| `optimize_voucher` | Voucher ladder 3 bậc kèm abuse risk | avg_order_value_vnd, target_conversion_lift_pct, budget_per_user_vnd, voucher_type |
 | `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
 | `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Đánh giá nguy cơ churn | days_inactive, users, points |
 | `analyze_experiment` | Đọc kết quả A/B test | control/treatment counts + sample sizes |
 | `estimate_sample_size` | Tính sample size trước khi test | baseline_rate, MDE |
+
+## Hệ sinh thái repo
+
+Mình có 3 repo phục vụ 3 mục đích khác nhau:
+
+| Repo | Là gì | Dùng khi nào |
+|---|---|---|
+| [ai-growth-prompts](https://github.com/thaolst/ai-growth-prompts) | Thư viện prompt theo chủ đề, copy-paste được ngay | Cần prompt cho 1 task cụ thể: thiết kế voucher, phân tích segment, viết brief |
+| [ai-growth-agents-for-marketers](https://github.com/thaolst/ai-growth-agents-for-marketers) | Workflow nhiều bước dạng prompt + script, có skill cài cho Claude Code | Muốn chạy quy trình end-to-end: lập kế hoạch MEU, phân tích A/B test |
+| [growth-mcp](https://github.com/thaolst/growth-mcp) (repo này) | MCP server đóng gói logic growth thành tool | Muốn Claude/Cursor gọi tool trực tiếp thay vì paste prompt |
 
 ## Giới hạn
 
@@ -249,10 +260,21 @@ Add to `.cursor/mcp.json`:
 |---|---|---|
 | `design_campaign` | Campaign brief by level S/M/L | level, objective, segment |
 | `suggest_voucher` | Voucher recommendation by segment | segment, objective, budget_level |
+| `optimize_voucher` | 3-tier voucher ladder with abuse risk | avg_order_value_vnd, target_conversion_lift_pct, budget_per_user_vnd, voucher_type |
 | `analyze_retention` | Cohort analysis, find biggest drop point | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Assess churn risk level | days_inactive, users, points |
 | `analyze_experiment` | Read A/B test results with stats | control/treatment counts + sample sizes |
 | `estimate_sample_size` | Calculate sample size before running a test | baseline_rate, MDE |
+
+## Repo ecosystem
+
+I maintain 3 repos serving different purposes:
+
+| Repo | What it is | When to use |
+|---|---|---|
+| [ai-growth-prompts](https://github.com/thaolst/ai-growth-prompts) | Topic-based prompt library, ready to copy-paste | You need a prompt for one specific task: voucher design, segment analysis, campaign brief |
+| [ai-growth-agents-for-marketers](https://github.com/thaolst/ai-growth-agents-for-marketers) | Multi-step workflows as prompts + scripts, installable as Claude Code skills | You want an end-to-end process: MEU planning, A/B test analysis |
+| [growth-mcp](https://github.com/thaolst/growth-mcp) (this repo) | MCP server packaging growth logic as callable tools | You want Claude/Cursor to call tools directly instead of pasting prompts |
 
 ## Limitations
 

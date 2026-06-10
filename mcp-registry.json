@@ -12,10 +12,20 @@
     "pip": "growth-mcp",
     "command": "growth-mcp"
   },
-  "tags": ["marketing", "growth", "fintech", "campaign", "retention", "ab-testing", "loyalty", "sea"],
+  "tags": [
+    "marketing",
+    "growth",
+    "fintech",
+    "campaign",
+    "retention",
+    "ab-testing",
+    "loyalty",
+    "sea"
+  ],
   "tools": [
     "design_campaign",
     "suggest_voucher",
+    "optimize_voucher",
     "analyze_retention",
     "predict_churn_risk",
     "analyze_experiment",
