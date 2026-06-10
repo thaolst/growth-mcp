@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source
 
 mcp = FastMCP(
     "growth-mcp",
@@ -118,6 +118,95 @@ def summarize_segments_from_csv(
         ))
     except Exception as e:
         return _err(f"summarize_segments_from_csv failed: {e}")
+
+
+@mcp.tool()
+def analyze_experiment_from_bigquery(
+    sql: str,
+    group_col: str,
+    converted_col: str,
+    project: str | None = None,
+    control_label: str = "control",
+    treatment_label: str = "treatment",
+    metric_name: str = "conversion",
+) -> str:
+    """Run an A/B test analysis on the result of a BigQuery SELECT query.
+
+    Requires: pip install "growth-mcp[bigquery]" and Google ADC auth.
+    The query must return 1 row per user with a group column and a
+    conversion flag column. Read-only: only SELECT/WITH queries allowed.
+
+    Args:
+        sql: SELECT query returning 1 row per user
+        group_col: Result column holding the experiment group label
+        converted_col: Result column holding conversion flag (1/0, true/false)
+        project: Optional GCP project ID (defaults to ADC project)
+        control_label: Value marking the control group
+        treatment_label: Value marking the treatment group
+        metric_name: Metric name for reporting
+    """
+    try:
+        return _ok(bigquery_source.analyze_experiment_from_bigquery(
+            sql, group_col, converted_col, project,
+            control_label, treatment_label, metric_name,
+        ))
+    except Exception as e:
+        return _err(f"analyze_experiment_from_bigquery failed: {e}")
+
+
+@mcp.tool()
+def analyze_retention_from_bigquery(
+    sql: str,
+    period_col: str,
+    value_col: str,
+    project: str | None = None,
+    campaign_level: Literal["S", "M"] = "S",
+) -> str:
+    """Run retention cohort analysis on a BigQuery query result.
+
+    Requires: pip install "growth-mcp[bigquery]" and Google ADC auth.
+    The query must return 1 row per period with a period label and a
+    retention rate (0-1) or active user count (auto-normalized).
+
+    Args:
+        sql: SELECT query returning 1 row per period
+        period_col: Result column holding the period label
+        value_col: Result column holding retention rate or user count
+        project: Optional GCP project ID
+        campaign_level: Intervention budget level, S or M
+    """
+    try:
+        return _ok(bigquery_source.analyze_retention_from_bigquery(
+            sql, period_col, value_col, project, campaign_level,
+        ))
+    except Exception as e:
+        return _err(f"analyze_retention_from_bigquery failed: {e}")
+
+
+@mcp.tool()
+def summarize_segments_from_bigquery(
+    sql: str,
+    segment_col: str,
+    value_col: str,
+    project: str | None = None,
+) -> str:
+    """Per-segment statistics on a BigQuery query result.
+
+    Requires: pip install "growth-mcp[bigquery]" and Google ADC auth.
+    Useful for segmented balance or spend analysis on warehouse data.
+
+    Args:
+        sql: SELECT query returning 1 row per user or transaction
+        segment_col: Result column holding the segment label
+        value_col: Numeric result column to aggregate
+        project: Optional GCP project ID
+    """
+    try:
+        return _ok(bigquery_source.summarize_segments_from_bigquery(
+            sql, segment_col, value_col, project,
+        ))
+    except Exception as e:
+        return _err(f"summarize_segments_from_bigquery failed: {e}")
 
 
 @mcp.tool()

@@ -124,6 +124,9 @@ Thêm vào `.cursor/mcp.json`:
 | `analyze_experiment_from_csv` | A/B test trực tiếp từ CSV raw (1 dòng/user) | file_path, group_col, converted_col |
 | `analyze_retention_from_csv` | Phân tích cohort retention từ CSV (rate hoặc count) | file_path, period_col, value_col |
 | `summarize_segments_from_csv` | Thống kê theo segment từ CSV raw | file_path, segment_col, value_col |
+| `analyze_experiment_from_bigquery` | A/B test trên kết quả SQL BigQuery | sql, group_col, converted_col |
+| `analyze_retention_from_bigquery` | Retention cohort từ BigQuery | sql, period_col, value_col |
+| `summarize_segments_from_bigquery` | Thống kê segment trên warehouse data | sql, segment_col, value_col |
 | `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
 | `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
@@ -141,9 +144,19 @@ Mình có 3 repo phục vụ 3 mục đích khác nhau:
 | [ai-growth-agents-for-marketers](https://github.com/thaolst/ai-growth-agents-for-marketers) | Workflow nhiều bước dạng prompt + script, có skill cài cho Claude Code | Muốn chạy quy trình end-to-end: lập kế hoạch MEU, phân tích A/B test |
 | [growth-mcp](https://github.com/thaolst/growth-mcp) (repo này) | MCP server đóng gói logic growth thành tool | Muốn Claude/Cursor gọi tool trực tiếp thay vì paste prompt |
 
+
+Tool BigQuery cần extra dependency và auth chuẩn Google Cloud:
+
+```bash
+pip install "growth-mcp[bigquery]"
+gcloud auth application-default login
+```
+
+Chỉ chấp nhận query SELECT (read-only), giới hạn 200K dòng. Data lớn hơn thì aggregate ngay trong SQL.
+
 ## Giới hạn
 
-Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Chưa kết nối trực tiếp database/BigQuery/Mixpanel - export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
+Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Đã hỗ trợ CSV và BigQuery. Mixpanel và các nguồn khác chưa có - export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
 
 ## 👤 Tác giả
 
@@ -269,6 +282,9 @@ Add to `.cursor/mcp.json`:
 | `analyze_experiment_from_csv` | A/B test straight from raw CSV (1 row/user) | file_path, group_col, converted_col |
 | `analyze_retention_from_csv` | Retention cohort analysis from CSV (rates or counts) | file_path, period_col, value_col |
 | `summarize_segments_from_csv` | Per-segment stats from raw CSV | file_path, segment_col, value_col |
+| `analyze_experiment_from_bigquery` | A/B test on a BigQuery SQL result | sql, group_col, converted_col |
+| `analyze_retention_from_bigquery` | Retention cohort from BigQuery | sql, period_col, value_col |
+| `summarize_segments_from_bigquery` | Segment stats on warehouse data | sql, segment_col, value_col |
 | `analyze_retention` | Cohort analysis, find biggest drop point | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Assess churn risk level | days_inactive, users, points |
 | `analyze_experiment` | Read A/B test results with stats | control/treatment counts + sample sizes |
@@ -284,9 +300,19 @@ I maintain 3 repos serving different purposes:
 | [ai-growth-agents-for-marketers](https://github.com/thaolst/ai-growth-agents-for-marketers) | Multi-step workflows as prompts + scripts, installable as Claude Code skills | You want an end-to-end process: MEU planning, A/B test analysis |
 | [growth-mcp](https://github.com/thaolst/growth-mcp) (this repo) | MCP server packaging growth logic as callable tools | You want Claude/Cursor to call tools directly instead of pasting prompts |
 
+
+BigQuery tools need the optional dependency and standard Google Cloud auth:
+
+```bash
+pip install "growth-mcp[bigquery]"
+gcloud auth application-default login
+```
+
+Read-only (SELECT queries only), capped at 200K rows. Aggregate in SQL for bigger data.
+
 ## Limitations
 
-Analysis tools take data via parameters or through the CSV data layer (`*_from_csv`). No direct database/BigQuery/Mixpanel connection yet - export to CSV first, then analyze. Meant to **speed up thinking**, not replace a data analyst.
+Analysis tools take data via parameters or through the CSV data layer (`*_from_csv`). CSV and BigQuery are supported. Mixpanel and other sources are not yet - export to CSV first, then analyze. Meant to **speed up thinking**, not replace a data analyst.
 
 ## 👤 Author
 

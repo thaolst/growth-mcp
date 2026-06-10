@@ -1,6 +1,6 @@
 [project]
 name = "growth-mcp"
-version = "0.5.0"
+version = "0.6.0"
 description = "MCP server for growth marketing — campaign design, retention analysis, churn prediction"
 authors = [{ name = "Tara Le", email = "tienthaotara@gmail.com" }]
 license = { text = "MIT" }
@@ -10,6 +10,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+bigquery = [
+    "google-cloud-bigquery>=3.0",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",

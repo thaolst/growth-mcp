@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from growth_mcp.tools import campaign, retention, experiment, voucher, datasource
+from growth_mcp.tools import campaign, retention, experiment, voucher, datasource, bigquery_source
 
 
 # ===========================================================================
@@ -382,3 +382,82 @@ class TestSegmentsFromCsv:
         p = _write_csv("segment,xu\n,abc\n")
         r = datasource.summarize_segments_from_csv(p, "segment", "xu")
         assert "error" in r
+
+
+# ===========================================================================
+# bigquery_source
+# ===========================================================================
+
+class TestBigQuerySqlGuardrail:
+    def test_select_allowed(self):
+        assert bigquery_source._validate_sql("SELECT * FROM t") is None
+        assert bigquery_source._validate_sql("  WITH x AS (SELECT 1) SELECT * FROM x") is None
+
+    def test_write_rejected(self):
+        for sql in ["DELETE FROM t", "DROP TABLE t", "SELECT 1; DROP TABLE t",
+                    "INSERT INTO t VALUES (1)", "update t set a=1"]:
+            assert bigquery_source._validate_sql(sql) is not None
+
+
+class TestBigQueryExperiment:
+    def test_with_mocked_rows(self, monkeypatch):
+        rows = (
+            [{"grp": "control", "conv": 1}] * 100 + [{"grp": "control", "conv": 0}] * 900
+            + [{"grp": "treatment", "conv": 1}] * 150 + [{"grp": "treatment", "conv": 0}] * 850
+        )
+        monkeypatch.setattr(bigquery_source, "_run_query", lambda sql, project=None: rows)
+        r = bigquery_source.analyze_experiment_from_bigquery("SELECT 1", "grp", "conv")
+        assert "error" not in r
+        assert r["data_source"]["source"] == "bigquery"
+        assert r["data_source"]["treatment"]["conversions"] == 150
+
+    def test_missing_column(self, monkeypatch):
+        monkeypatch.setattr(
+            bigquery_source, "_run_query",
+            lambda sql, project=None: [{"a": 1}],
+        )
+        r = bigquery_source.analyze_experiment_from_bigquery("SELECT 1", "grp", "conv")
+        assert "error" in r
+
+    def test_query_error_propagates(self, monkeypatch):
+        monkeypatch.setattr(
+            bigquery_source, "_run_query",
+            lambda sql, project=None: {"error": "boom"},
+        )
+        r = bigquery_source.analyze_experiment_from_bigquery("SELECT 1", "grp", "conv")
+        assert r == {"error": "boom"}
+
+
+class TestBigQueryRetention:
+    def test_counts_normalized(self, monkeypatch):
+        rows = [
+            {"period": "week_0", "users": 1000},
+            {"period": "week_1", "users": 600},
+            {"period": "week_2", "users": 450},
+        ]
+        monkeypatch.setattr(bigquery_source, "_run_query", lambda sql, project=None: rows)
+        r = bigquery_source.analyze_retention_from_bigquery("SELECT 1", "period", "users")
+        assert "error" not in r
+        assert r["data_source"]["normalized_from_counts"] is True
+        assert r["data_source"]["source"] == "bigquery"
+
+
+class TestBigQuerySegments:
+    def test_basic(self, monkeypatch):
+        rows = [
+            {"segment": "new", "xu": 100}, {"segment": "new", "xu": 200},
+            {"segment": "active", "xu": 500}, {"segment": "active", "xu": 700},
+        ]
+        monkeypatch.setattr(bigquery_source, "_run_query", lambda sql, project=None: rows)
+        r = bigquery_source.summarize_segments_from_bigquery("SELECT 1", "segment", "xu")
+        assert r["segment_count"] == 2
+        assert r["segments"]["active"]["sum"] == 1200
+        assert r["source"] == "bigquery"
+
+
+class TestBigQueryImportHint:
+    def test_missing_dependency_hint(self):
+        # google-cloud-bigquery không được cài trong môi trường test
+        r = bigquery_source._run_query("SELECT 1")
+        assert "error" in r
+        assert "growth-mcp[bigquery]" in r["error"]

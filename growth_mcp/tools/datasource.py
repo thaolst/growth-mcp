@@ -43,6 +43,118 @@ def _is_number(value: str) -> bool:
         return False
 
 
+def experiment_from_rows(
+    rows: list[dict],
+    group_col: str,
+    converted_col: str,
+    control_label: str = "control",
+    treatment_label: str = "treatment",
+    metric_name: str = "conversion",
+) -> dict:
+    """Aggregate rows (1 per user) into counts and run a two-proportion z-test.
+
+    Shared by all data sources (CSV, BigQuery). Values may be str or native types.
+    """
+    truthy = {"1", "true", "yes", "y", "converted"}
+    falsy = {"0", "false", "no", "n", ""}
+    counts = {control_label: [0, 0], treatment_label: [0, 0]}  # [conversions, sample]
+
+    skipped = 0
+    for r in rows:
+        group = str(r.get(group_col) if r.get(group_col) is not None else "").strip()
+        if group not in counts:
+            skipped += 1
+            continue
+        raw = str(r.get(converted_col) if r.get(converted_col) is not None else "").strip().lower()
+        if raw in truthy:
+            counts[group][0] += 1
+            counts[group][1] += 1
+        elif raw in falsy:
+            counts[group][1] += 1
+        else:
+            skipped += 1
+
+    c_conv, c_n = counts[control_label]
+    t_conv, t_n = counts[treatment_label]
+    if c_n == 0 or t_n == 0:
+        return {
+            "error": (
+                f"No rows matched group labels '{control_label}'/'{treatment_label}' "
+                f"in column '{group_col}'. Check control_label and treatment_label."
+            )
+        }
+
+    result = experiment.analyze_test(c_conv, t_conv, c_n, t_n, metric_name)
+    result["data_source"] = {
+        "rows_used": c_n + t_n,
+        "rows_skipped": skipped,
+        "control": {"conversions": c_conv, "sample": c_n},
+        "treatment": {"conversions": t_conv, "sample": t_n},
+    }
+    return result
+
+
+def retention_from_pairs(series: dict[str, float], campaign_level: str = "S") -> dict:
+    """Run cohort analysis on a period -> value mapping (rates or counts)."""
+    if len(series) < 2:
+        return {"error": "Need at least 2 periods with numeric values."}
+
+    normalized = False
+    if any(v > 1.0 for v in series.values()):
+        first = series[sorted(series.keys())[0]]
+        if first <= 0:
+            return {"error": "First period count must be positive to normalize."}
+        series = {k: round(v / first, 4) for k, v in series.items()}
+        normalized = True
+
+    result = retention.analyze_cohort(series, campaign_level)
+    result["data_source"] = {
+        "periods": len(series),
+        "normalized_from_counts": normalized,
+    }
+    return result
+
+
+def segments_from_rows(
+    rows: list[dict],
+    segment_col: str,
+    value_col: str,
+) -> dict:
+    """Per-segment stats from raw rows. Shared by all data sources."""
+    buckets: dict[str, list[float]] = defaultdict(list)
+    skipped = 0
+    for r in rows:
+        seg = str(r.get(segment_col) if r.get(segment_col) is not None else "").strip()
+        raw = str(r.get(value_col) if r.get(value_col) is not None else "").strip()
+        if not seg or not _is_number(raw):
+            skipped += 1
+            continue
+        buckets[seg].append(float(raw))
+
+    if not buckets:
+        return {"error": "No usable rows: check segment_col and value_col."}
+
+    grand_total = sum(sum(v) for v in buckets.values())
+    segments = {}
+    for seg, vals in sorted(buckets.items(), key=lambda kv: -sum(kv[1])):
+        total = sum(vals)
+        segments[seg] = {
+            "count": len(vals),
+            "sum": round(total, 2),
+            "mean": round(total / len(vals), 2),
+            "min": min(vals),
+            "max": max(vals),
+            "share_of_total": round(total / grand_total, 4) if grand_total else 0,
+        }
+
+    return {
+        "segment_count": len(segments),
+        "rows_used": sum(len(v) for v in buckets.values()),
+        "rows_skipped": skipped,
+        "segments": segments,
+    }
+
+
 def inspect_csv(file_path: str) -> dict:
     """Summarize a CSV: columns, inferred types, row count, sample rows."""
     parsed = _read_csv(file_path)
@@ -98,43 +210,12 @@ def analyze_experiment_from_csv(
         if col not in headers:
             return {"error": f"Column '{col}' not found. Available: {headers}"}
 
-    truthy = {"1", "true", "yes", "y", "converted"}
-    falsy = {"0", "false", "no", "n", ""}
-    counts = {control_label: [0, 0], treatment_label: [0, 0]}  # [conversions, sample]
-
-    skipped = 0
-    for r in rows:
-        group = (r.get(group_col) or "").strip()
-        if group not in counts:
-            skipped += 1
-            continue
-        raw = (r.get(converted_col) or "").strip().lower()
-        if raw in truthy:
-            counts[group][0] += 1
-            counts[group][1] += 1
-        elif raw in falsy:
-            counts[group][1] += 1
-        else:
-            skipped += 1
-
-    c_conv, c_n = counts[control_label]
-    t_conv, t_n = counts[treatment_label]
-    if c_n == 0 or t_n == 0:
-        return {
-            "error": (
-                f"No rows matched group labels '{control_label}'/'{treatment_label}' "
-                f"in column '{group_col}'. Check control_label and treatment_label."
-            )
-        }
-
-    result = experiment.analyze_test(c_conv, t_conv, c_n, t_n, metric_name)
-    result["data_source"] = {
-        "file": os.path.basename(file_path),
-        "rows_used": c_n + t_n,
-        "rows_skipped": skipped,
-        "control": {"conversions": c_conv, "sample": c_n},
-        "treatment": {"conversions": t_conv, "sample": t_n},
-    }
+    result = experiment_from_rows(
+        rows, group_col, converted_col, control_label, treatment_label, metric_name,
+    )
+    if "error" not in result:
+        result["data_source"]["source"] = "csv"
+        result["data_source"]["file"] = os.path.basename(file_path)
     return result
 
 
@@ -168,25 +249,10 @@ def analyze_retention_from_csv(
             continue
         series[period] = float(raw)
 
-    if len(series) < 2:
-        return {"error": "Need at least 2 periods with numeric values."}
-
-    values = list(series.values())
-    normalized = False
-    if any(v > 1.0 for v in values):
-        # Treat as user counts: normalize against the first (sorted) period
-        first = series[sorted(series.keys())[0]]
-        if first <= 0:
-            return {"error": "First period count must be positive to normalize."}
-        series = {k: round(v / first, 4) for k, v in series.items()}
-        normalized = True
-
-    result = retention.analyze_cohort(series, campaign_level)
-    result["data_source"] = {
-        "file": os.path.basename(file_path),
-        "periods": len(series),
-        "normalized_from_counts": normalized,
-    }
+    result = retention_from_pairs(series, campaign_level)
+    if "error" not in result:
+        result["data_source"]["source"] = "csv"
+        result["data_source"]["file"] = os.path.basename(file_path)
     return result
 
 
@@ -209,36 +275,8 @@ def summarize_segments_from_csv(
         if col not in headers:
             return {"error": f"Column '{col}' not found. Available: {headers}"}
 
-    buckets: dict[str, list[float]] = defaultdict(list)
-    skipped = 0
-    for r in rows:
-        seg = (r.get(segment_col) or "").strip()
-        raw = (r.get(value_col) or "").strip()
-        if not seg or not _is_number(raw):
-            skipped += 1
-            continue
-        buckets[seg].append(float(raw))
-
-    if not buckets:
-        return {"error": "No usable rows: check segment_col and value_col."}
-
-    grand_total = sum(sum(v) for v in buckets.values())
-    segments = {}
-    for seg, vals in sorted(buckets.items(), key=lambda kv: -sum(kv[1])):
-        total = sum(vals)
-        segments[seg] = {
-            "count": len(vals),
-            "sum": round(total, 2),
-            "mean": round(total / len(vals), 2),
-            "min": min(vals),
-            "max": max(vals),
-            "share_of_total": round(total / grand_total, 4) if grand_total else 0,
-        }
-
-    return {
-        "file": os.path.basename(file_path),
-        "segment_count": len(segments),
-        "rows_used": sum(len(v) for v in buckets.values()),
-        "rows_skipped": skipped,
-        "segments": segments,
-    }
+    result = segments_from_rows(rows, segment_col, value_col)
+    if "error" not in result:
+        result["source"] = "csv"
+        result["file"] = os.path.basename(file_path)
+    return result
