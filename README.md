@@ -120,6 +120,10 @@ Thêm vào `.cursor/mcp.json`:
 | `design_campaign` | Brief campaign theo level S/M/L | level, objective, segment |
 | `suggest_voucher` | Voucher phù hợp segment | segment, objective, budget_level |
 | `optimize_voucher` | Voucher ladder 3 bậc kèm abuse risk | avg_order_value_vnd, target_conversion_lift_pct, budget_per_user_vnd, voucher_type |
+| `inspect_csv` | Xem cấu trúc file CSV: cột, kiểu dữ liệu, sample | file_path |
+| `analyze_experiment_from_csv` | A/B test trực tiếp từ CSV raw (1 dòng/user) | file_path, group_col, converted_col |
+| `analyze_retention_from_csv` | Phân tích cohort retention từ CSV (rate hoặc count) | file_path, period_col, value_col |
+| `summarize_segments_from_csv` | Thống kê theo segment từ CSV raw | file_path, segment_col, value_col |
 | `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
 | `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
@@ -139,7 +143,7 @@ Mình có 3 repo phục vụ 3 mục đích khác nhau:
 
 ## Giới hạn
 
-Tool trả output dạng framework/recommendation, không kéo real data từ database. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
+Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Chưa kết nối trực tiếp database/BigQuery/Mixpanel - export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
 
 ## 👤 Tác giả
 
@@ -261,6 +265,10 @@ Add to `.cursor/mcp.json`:
 | `design_campaign` | Campaign brief by level S/M/L | level, objective, segment |
 | `suggest_voucher` | Voucher recommendation by segment | segment, objective, budget_level |
 | `optimize_voucher` | 3-tier voucher ladder with abuse risk | avg_order_value_vnd, target_conversion_lift_pct, budget_per_user_vnd, voucher_type |
+| `inspect_csv` | Inspect CSV structure: columns, types, sample | file_path |
+| `analyze_experiment_from_csv` | A/B test straight from raw CSV (1 row/user) | file_path, group_col, converted_col |
+| `analyze_retention_from_csv` | Retention cohort analysis from CSV (rates or counts) | file_path, period_col, value_col |
+| `summarize_segments_from_csv` | Per-segment stats from raw CSV | file_path, segment_col, value_col |
 | `analyze_retention` | Cohort analysis, find biggest drop point | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Assess churn risk level | days_inactive, users, points |
 | `analyze_experiment` | Read A/B test results with stats | control/treatment counts + sample sizes |
@@ -278,7 +286,7 @@ I maintain 3 repos serving different purposes:
 
 ## Limitations
 
-Tools return framework-level output and recommendations - they don't pull real data from a database. Meant to **speed up thinking**, not replace a data analyst.
+Analysis tools take data via parameters or through the CSV data layer (`*_from_csv`). No direct database/BigQuery/Mixpanel connection yet - export to CSV first, then analyze. Meant to **speed up thinking**, not replace a data analyst.
 
 ## 👤 Author
 

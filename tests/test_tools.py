@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from growth_mcp.tools import campaign, retention, experiment, voucher
+from growth_mcp.tools import campaign, retention, experiment, voucher, datasource
 
 
 # ===========================================================================
@@ -292,4 +292,93 @@ class TestOptimizeVoucher:
 
     def test_invalid_aov(self):
         r = voucher.optimize_voucher(0, 20, 15000)
+        assert "error" in r
+
+
+# ===========================================================================
+# datasource (CSV data layer)
+# ===========================================================================
+
+import tempfile
+
+
+def _write_csv(content: str) -> str:
+    f = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False)
+    f.write(content)
+    f.close()
+    return f.name
+
+
+class TestInspectCsv:
+    def test_basic(self):
+        p = _write_csv("segment,balance\nnew,100\nactive,250\nactive,300\n")
+        r = datasource.inspect_csv(p)
+        assert r["rows"] == 3
+        assert r["columns"]["balance"]["type"] == "numeric"
+        assert r["columns"]["segment"]["unique"] == 2
+
+    def test_missing_file(self):
+        r = datasource.inspect_csv("/nonexistent.csv")
+        assert "error" in r
+
+    def test_empty_data(self):
+        p = _write_csv("a,b\n")
+        r = datasource.inspect_csv(p)
+        assert "error" in r
+
+
+class TestExperimentFromCsv:
+    def test_significant(self):
+        rows = ["group,converted"]
+        rows += ["control,1"] * 100 + ["control,0"] * 900
+        rows += ["treatment,1"] * 150 + ["treatment,0"] * 850
+        p = _write_csv("\n".join(rows) + "\n")
+        r = datasource.analyze_experiment_from_csv(p, "group", "converted")
+        assert "error" not in r
+        assert r["data_source"]["control"]["sample"] == 1000
+        assert r["data_source"]["treatment"]["conversions"] == 150
+
+    def test_bad_labels(self):
+        p = _write_csv("group,converted\nA,1\nB,0\n")
+        r = datasource.analyze_experiment_from_csv(p, "group", "converted")
+        assert "error" in r
+
+    def test_missing_column(self):
+        p = _write_csv("g,c\ncontrol,1\n")
+        r = datasource.analyze_experiment_from_csv(p, "group", "converted")
+        assert "error" in r
+
+
+class TestRetentionFromCsv:
+    def test_rates(self):
+        p = _write_csv("period,rate\nweek_0,1.0\nweek_1,0.6\nweek_2,0.45\n")
+        r = datasource.analyze_retention_from_csv(p, "period", "rate")
+        assert "error" not in r
+        assert r["data_source"]["normalized_from_counts"] is False
+
+    def test_counts_normalized(self):
+        p = _write_csv("period,users\nweek_0,1000\nweek_1,600\nweek_2,450\n")
+        r = datasource.analyze_retention_from_csv(p, "period", "users")
+        assert "error" not in r
+        assert r["data_source"]["normalized_from_counts"] is True
+
+    def test_too_few_periods(self):
+        p = _write_csv("period,rate\nweek_0,1.0\n")
+        r = datasource.analyze_retention_from_csv(p, "period", "rate")
+        assert "error" in r
+
+
+class TestSegmentsFromCsv:
+    def test_basic(self):
+        p = _write_csv(
+            "segment,xu\nnew,100\nnew,200\nactive,500\nactive,700\nlapsed,50\n"
+        )
+        r = datasource.summarize_segments_from_csv(p, "segment", "xu")
+        assert r["segment_count"] == 3
+        assert r["segments"]["active"]["sum"] == 1200
+        assert abs(sum(s["share_of_total"] for s in r["segments"].values()) - 1.0) < 0.01
+
+    def test_no_usable_rows(self):
+        p = _write_csv("segment,xu\n,abc\n")
+        r = datasource.summarize_segments_from_csv(p, "segment", "xu")
         assert "error" in r

@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource
 
 mcp = FastMCP(
     "growth-mcp",
@@ -22,6 +22,102 @@ def _ok(result: dict) -> str:
 
 def _err(message: str) -> str:
     return json.dumps({"error": message}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def inspect_csv(file_path: str) -> str:
+    """Inspect a local CSV file: columns, inferred types, row count, sample rows.
+
+    Run this first before any *_from_csv tool to discover column names.
+
+    Args:
+        file_path: Absolute or relative path to a local CSV file
+    """
+    try:
+        return _ok(datasource.inspect_csv(file_path))
+    except Exception as e:
+        return _err(f"inspect_csv failed: {e}")
+
+
+@mcp.tool()
+def analyze_experiment_from_csv(
+    file_path: str,
+    group_col: str,
+    converted_col: str,
+    control_label: str = "control",
+    treatment_label: str = "treatment",
+    metric_name: str = "conversion",
+) -> str:
+    """Run an A/B test analysis directly from a raw CSV (one row per user).
+
+    Aggregates conversions per group and runs a two-proportion z-test.
+    Use analyze_experiment instead if you already have aggregated counts.
+
+    Args:
+        file_path: Path to CSV with one row per user
+        group_col: Column holding the experiment group label
+        converted_col: Column holding conversion flag (1/0, true/false, yes/no)
+        control_label: Value in group_col marking the control group
+        treatment_label: Value in group_col marking the treatment group
+        metric_name: Name of the metric for reporting
+    """
+    try:
+        return _ok(datasource.analyze_experiment_from_csv(
+            file_path, group_col, converted_col,
+            control_label, treatment_label, metric_name,
+        ))
+    except Exception as e:
+        return _err(f"analyze_experiment_from_csv failed: {e}")
+
+
+@mcp.tool()
+def analyze_retention_from_csv(
+    file_path: str,
+    period_col: str,
+    value_col: str,
+    campaign_level: Literal["S", "M"] = "S",
+) -> str:
+    """Run retention cohort analysis from a CSV of periods and rates or counts.
+
+    Accepts retention rates (0.0-1.0) or active user counts per period
+    (counts are auto-normalized against the first period).
+
+    Args:
+        file_path: Path to CSV with one row per period
+        period_col: Column holding the period label (e.g. week_0, week_1)
+        value_col: Column holding retention rate or active user count
+        campaign_level: Intervention budget level, S or M
+    """
+    try:
+        return _ok(datasource.analyze_retention_from_csv(
+            file_path, period_col, value_col, campaign_level,
+        ))
+    except Exception as e:
+        return _err(f"analyze_retention_from_csv failed: {e}")
+
+
+@mcp.tool()
+def summarize_segments_from_csv(
+    file_path: str,
+    segment_col: str,
+    value_col: str,
+) -> str:
+    """Per-segment statistics (count, sum, mean, min, max, share) from raw CSV rows.
+
+    Useful for segmented balance or spend analysis, e.g. loyalty point
+    balances or voucher redemption value by user segment.
+
+    Args:
+        file_path: Path to CSV with one row per user or transaction
+        segment_col: Column holding the segment label
+        value_col: Numeric column to aggregate
+    """
+    try:
+        return _ok(datasource.summarize_segments_from_csv(
+            file_path, segment_col, value_col,
+        ))
+    except Exception as e:
+        return _err(f"summarize_segments_from_csv failed: {e}")
 
 
 @mcp.tool()
