@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from growth_mcp.tools import campaign, retention, experiment, voucher, datasource, bigquery_source, mixpanel_source
+from growth_mcp.tools import campaign, retention, experiment, voucher, datasource, bigquery_source, mixpanel_source, loyalty
 
 
 # ===========================================================================
@@ -623,3 +623,115 @@ class TestServerKnowledgeLayer:
         text = result.messages[0].content.text
         assert "/tmp/test.csv" in text
         assert "inspect_csv" in text
+
+
+# ===========================================================================
+# loyalty
+# ===========================================================================
+
+class TestPointsExpiry:
+    def test_on_target(self):
+        r = loyalty.forecast_points_expiry(
+            {"2026-07": 1000000, "2026-08": 500000}, 0.8, 20.0,
+        )
+        assert r["assessment"] == "ON_TARGET"
+        assert r["expected_breakage_pct"] == 20.0
+        assert r["heaviest_period"] == "2026-07"
+
+    def test_breakage_too_high(self):
+        r = loyalty.forecast_points_expiry({"2026-07": 1000000}, 0.4, 20.0)
+        assert r["assessment"] == "BREAKAGE_TOO_HIGH"
+
+    def test_breakage_too_low(self):
+        r = loyalty.forecast_points_expiry({"2026-07": 1000000}, 0.97, 20.0)
+        assert r["assessment"] == "BREAKAGE_TOO_LOW"
+
+    def test_invalid_rate(self):
+        assert "error" in loyalty.forecast_points_expiry({"a": 100}, 1.5)
+
+    def test_empty(self):
+        assert "error" in loyalty.forecast_points_expiry({}, 0.5)
+
+
+class TestElasticity:
+    def test_elastic(self):
+        # Giá giảm 20%, redemption tăng 50% -> co giãn mạnh
+        obs = [
+            {"period": "2026-04", "points_price": 100, "redemptions": 1000},
+            {"period": "2026-05", "points_price": 80, "redemptions": 1500},
+        ]
+        r = loyalty.analyze_redemption_elasticity(obs)
+        assert "error" not in r
+        assert r["classification"] in ("ELASTIC", "HIGHLY_ELASTIC")
+        assert r["average_arc_elasticity"] < 0  # giá giảm, lượng tăng
+
+    def test_inelastic(self):
+        obs = [
+            {"period": "2026-04", "points_price": 100, "redemptions": 1000},
+            {"period": "2026-05", "points_price": 50, "redemptions": 1050},
+        ]
+        r = loyalty.analyze_redemption_elasticity(obs)
+        assert r["classification"] == "INELASTIC"
+
+    def test_needs_two_obs(self):
+        assert "error" in loyalty.analyze_redemption_elasticity(
+            [{"period": "a", "points_price": 1, "redemptions": 1}]
+        )
+
+    def test_constant_price_error(self):
+        obs = [
+            {"period": "a", "points_price": 100, "redemptions": 1000},
+            {"period": "b", "points_price": 100, "redemptions": 1200},
+        ]
+        assert "error" in loyalty.analyze_redemption_elasticity(obs)
+
+
+class TestElasticityFromCsv:
+    def test_per_segment(self):
+        p = _write_csv(
+            "period,segment,price,redemptions\n"
+            "2026-04,new,100,1000\n2026-05,new,80,1600\n"
+            "2026-04,active,100,2000\n2026-05,active,80,2100\n"
+        )
+        r = loyalty.analyze_redemption_elasticity_from_csv(
+            p, "period", "price", "redemptions", "segment",
+        )
+        assert "error" not in r
+        assert r["most_price_sensitive"] == "new"
+        assert r["least_price_sensitive"] == "active"
+
+    def test_single_series(self):
+        p = _write_csv(
+            "period,price,redemptions\n2026-04,100,1000\n2026-05,80,1500\n"
+        )
+        r = loyalty.analyze_redemption_elasticity_from_csv(
+            p, "period", "price", "redemptions",
+        )
+        assert "error" not in r
+        assert r["source"] == "csv"
+
+    def test_missing_column(self):
+        p = _write_csv("a,b\n1,2\n")
+        r = loyalty.analyze_redemption_elasticity_from_csv(p, "period", "price", "redemptions")
+        assert "error" in r
+
+
+class TestBalanceHealth:
+    def test_mixed_statuses(self):
+        r = loyalty.analyze_balance_health([
+            {"segment": "new", "users": 1000, "total_balance": 500000,
+             "typical_redemption_price": 1000},  # avg 500, coverage 0.5
+            {"segment": "active", "users": 1000, "total_balance": 3000000,
+             "typical_redemption_price": 1000, "active_redeemer_share": 0.5},  # coverage 3
+            {"segment": "dormant", "users": 1000, "total_balance": 10000000,
+             "typical_redemption_price": 1000, "active_redeemer_share": 0.1},  # coverage 10
+        ])
+        by = {e["segment"]: e["status"] for e in r["segments"]}
+        assert by["new"] == "BELOW_REDEMPTION_FLOOR"
+        assert by["active"] == "HEALTHY"
+        assert by["dormant"] == "DORMANT_BALANCE_RISK"
+        assert set(r["segments_flagged"]) == {"new", "dormant"}
+
+    def test_invalid_input(self):
+        assert "error" in loyalty.analyze_balance_health([])
+        assert "error" in loyalty.analyze_balance_health([{"segment": "x"}])

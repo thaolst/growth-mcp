@@ -129,6 +129,10 @@ Thêm vào `.cursor/mcp.json`:
 | `summarize_segments_from_bigquery` | Thống kê segment trên warehouse data | sql, segment_col, value_col |
 | `analyze_experiment_from_mixpanel` | A/B test từ event Mixpanel | exposure_event, conversion_event, group_property, from_date, to_date |
 | `summarize_segments_from_mixpanel` | Thống kê segment trên event Mixpanel | event, segment_property, value_property, from_date, to_date |
+| `forecast_points_expiry` | Dự báo điểm hết hạn: liability, breakage, cần can thiệp không | expiring_points_by_period, historical_redemption_rate |
+| `analyze_redemption_elasticity` | Độ co giãn redemption theo giá điểm | observations, segment |
+| `analyze_redemption_elasticity_from_csv` | Co giãn theo từng segment từ CSV trong 1 lần chạy | file_path, period_col, price_col, redemptions_col, segment_col |
+| `analyze_balance_health` | Sức khỏe số dư điểm: coverage ratio, dormancy risk | segments |
 | `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
 | `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
@@ -310,6 +314,10 @@ Add to `.cursor/mcp.json`:
 | `summarize_segments_from_bigquery` | Segment stats on warehouse data | sql, segment_col, value_col |
 | `analyze_experiment_from_mixpanel` | A/B test from Mixpanel events | exposure_event, conversion_event, group_property, from_date, to_date |
 | `summarize_segments_from_mixpanel` | Segment stats over Mixpanel events | event, segment_property, value_property, from_date, to_date |
+| `forecast_points_expiry` | Points expiry forecast: liability, breakage, intervention need | expiring_points_by_period, historical_redemption_rate |
+| `analyze_redemption_elasticity` | Price elasticity of reward redemption | observations, segment |
+| `analyze_redemption_elasticity_from_csv` | Per-segment elasticity from CSV in one pass | file_path, period_col, price_col, redemptions_col, segment_col |
+| `analyze_balance_health` | Points balance health: coverage ratio, dormancy risk | segments |
 | `analyze_retention` | Cohort analysis, find biggest drop point | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Assess churn risk level | days_inactive, users, points |
 | `analyze_experiment` | Read A/B test results with stats | control/treatment counts + sample sizes |

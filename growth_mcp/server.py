@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source, mixpanel_source
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source, mixpanel_source, loyalty
 from growth_mcp import knowledge
 
 mcp = FastMCP(
@@ -334,6 +334,96 @@ Workflow:
 2. If concrete numbers are available (AOV, budget per user, target lift), run optimize_voucher and compare the proposed design against its output, especially the abuse_risk level.
 3. Check each principle explicitly: tier 1 anchor vs AOV, top tier stretch, percentage cap, budget-to-AOV ratio.
 4. Conclude with: approve, approve with changes (list them), or redesign (explain which principle is violated)."""
+
+
+@mcp.tool()
+def forecast_points_expiry(
+    expiring_points_by_period: dict[str, float],
+    historical_redemption_rate: float,
+    breakage_target_pct: float = 20.0,
+) -> str:
+    """Forecast loyalty points expiry: liability, expected breakage, intervention need.
+
+    Args:
+        expiring_points_by_period: Period -> points scheduled to expire,
+            e.g. {"2026-07": 1200000, "2026-08": 900000}
+        historical_redemption_rate: Share of at-risk points typically redeemed
+            before expiry (0-1)
+        breakage_target_pct: Program's target breakage percentage
+    """
+    try:
+        return _ok(loyalty.forecast_points_expiry(
+            expiring_points_by_period, historical_redemption_rate, breakage_target_pct,
+        ))
+    except Exception as e:
+        return _err(f"forecast_points_expiry failed: {e}")
+
+
+@mcp.tool()
+def analyze_redemption_elasticity(
+    observations: list[dict],
+    segment: str | None = None,
+) -> str:
+    """Price elasticity of reward redemption from observed price periods.
+
+    Computes arc elasticity between adjacent periods and classifies the
+    response (elastic vs inelastic) with a pricing recommendation.
+
+    Args:
+        observations: List of {"period": str, "points_price": float,
+            "redemptions": float}, at least 2 periods
+        segment: Optional segment label for reporting
+    """
+    try:
+        return _ok(loyalty.analyze_redemption_elasticity(observations, segment))
+    except Exception as e:
+        return _err(f"analyze_redemption_elasticity failed: {e}")
+
+
+@mcp.tool()
+def analyze_redemption_elasticity_from_csv(
+    file_path: str,
+    period_col: str,
+    price_col: str,
+    redemptions_col: str,
+    segment_col: str | None = None,
+) -> str:
+    """Redemption price elasticity straight from a CSV of price periods.
+
+    With segment_col, elasticity is computed per segment in one pass and the
+    most/least price-sensitive segments are identified.
+
+    Args:
+        file_path: Path to CSV, 1 row per period (or per period x segment)
+        period_col: Column holding the period label
+        price_col: Column holding the points price
+        redemptions_col: Column holding redemption volume
+        segment_col: Optional column holding the segment label
+    """
+    try:
+        return _ok(loyalty.analyze_redemption_elasticity_from_csv(
+            file_path, period_col, price_col, redemptions_col, segment_col,
+        ))
+    except Exception as e:
+        return _err(f"analyze_redemption_elasticity_from_csv failed: {e}")
+
+
+@mcp.tool()
+def analyze_balance_health(segments: list[dict]) -> str:
+    """Points balance health per segment: coverage ratio and dormancy risk.
+
+    Coverage ratio = average balance / typical redemption price. Below 1
+    means most users cannot afford a single reward; far above with low
+    redemption activity signals dormant balance liability.
+
+    Args:
+        segments: List of {"segment": str, "users": int, "total_balance": float,
+            "typical_redemption_price": float, "active_redeemer_share": float (optional, 0-1)}
+    """
+    try:
+        return _ok(loyalty.analyze_balance_health(segments))
+    except Exception as e:
+        return _err(f"analyze_balance_health failed: {e}")
 
 
 @mcp.tool()
