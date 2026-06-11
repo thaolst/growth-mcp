@@ -127,6 +127,8 @@ Thêm vào `.cursor/mcp.json`:
 | `analyze_experiment_from_bigquery` | A/B test trên kết quả SQL BigQuery | sql, group_col, converted_col |
 | `analyze_retention_from_bigquery` | Retention cohort từ BigQuery | sql, period_col, value_col |
 | `summarize_segments_from_bigquery` | Thống kê segment trên warehouse data | sql, segment_col, value_col |
+| `analyze_experiment_from_mixpanel` | A/B test từ event Mixpanel | exposure_event, conversion_event, group_property, from_date, to_date |
+| `summarize_segments_from_mixpanel` | Thống kê segment trên event Mixpanel | event, segment_property, value_property, from_date, to_date |
 | `monitor_campaign` | **Monitor campaign real-time** | run_days, reach, redemptions, vouchers, budget |
 | `analyze_segment` | **Phân tích segment + recommend targeting** | segment_type, size, retention, redemption |
 | `analyze_retention` | Phân tích cohort, tìm điểm drop | cohort_data (JSON), campaign_level |
@@ -154,9 +156,18 @@ gcloud auth application-default login
 
 Chỉ chấp nhận query SELECT (read-only), giới hạn 200K dòng. Data lớn hơn thì aggregate ngay trong SQL.
 
+Tool Mixpanel không cần thêm dependency, chỉ cần API secret của project:
+
+```bash
+export MIXPANEL_API_SECRET=your_secret
+# EU data residency: export MIXPANEL_API_HOST=data-eu.mixpanel.com
+```
+
+Khoảng thời gian export giới hạn 90 ngày, 200K event.
+
 ## Giới hạn
 
-Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Đã hỗ trợ CSV và BigQuery. Mixpanel và các nguồn khác chưa có - export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
+Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Đã hỗ trợ CSV, BigQuery và Mixpanel. Nguồn khác thì export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
 
 ## 👤 Tác giả
 
@@ -285,6 +296,8 @@ Add to `.cursor/mcp.json`:
 | `analyze_experiment_from_bigquery` | A/B test on a BigQuery SQL result | sql, group_col, converted_col |
 | `analyze_retention_from_bigquery` | Retention cohort from BigQuery | sql, period_col, value_col |
 | `summarize_segments_from_bigquery` | Segment stats on warehouse data | sql, segment_col, value_col |
+| `analyze_experiment_from_mixpanel` | A/B test from Mixpanel events | exposure_event, conversion_event, group_property, from_date, to_date |
+| `summarize_segments_from_mixpanel` | Segment stats over Mixpanel events | event, segment_property, value_property, from_date, to_date |
 | `analyze_retention` | Cohort analysis, find biggest drop point | cohort_data (JSON), campaign_level |
 | `predict_churn_risk` | Assess churn risk level | days_inactive, users, points |
 | `analyze_experiment` | Read A/B test results with stats | control/treatment counts + sample sizes |
@@ -310,9 +323,18 @@ gcloud auth application-default login
 
 Read-only (SELECT queries only), capped at 200K rows. Aggregate in SQL for bigger data.
 
+Mixpanel tools need no extra dependency, just your project API secret:
+
+```bash
+export MIXPANEL_API_SECRET=your_secret
+# EU data residency: export MIXPANEL_API_HOST=data-eu.mixpanel.com
+```
+
+Export window capped at 90 days, 200K events.
+
 ## Limitations
 
-Analysis tools take data via parameters or through the CSV data layer (`*_from_csv`). CSV and BigQuery are supported. Mixpanel and other sources are not yet - export to CSV first, then analyze. Meant to **speed up thinking**, not replace a data analyst.
+Analysis tools take data via parameters or through the CSV data layer (`*_from_csv`). CSV, BigQuery, and Mixpanel are supported. For other sources, export to CSV first, then analyze. Meant to **speed up thinking**, not replace a data analyst.
 
 ## 👤 Author
 

@@ -1,7 +1,7 @@
 {
   "name": "growth-mcp",
   "display_name": "Growth MCP",
-  "description": "MCP server for growth marketing: campaign design, retention analysis, churn prediction, A/B testing, segmentation, and CSV and BigQuery data layers to run analysis on real campaign data. Built from real fintech loyalty campaigns in Southeast Asia.",
+  "description": "MCP server for growth marketing: campaign design, retention analysis, churn prediction, A/B testing, segmentation, and CSV, BigQuery, and Mixpanel data layers to run analysis on real campaign data. Built from real fintech loyalty campaigns in Southeast Asia.",
   "homepage": "https://github.com/thaolst/growth-mcp",
   "license": "MIT",
   "author": {
@@ -41,6 +41,8 @@
     "summarize_segments_from_csv",
     "analyze_experiment_from_bigquery",
     "analyze_retention_from_bigquery",
-    "summarize_segments_from_bigquery"
+    "summarize_segments_from_bigquery",
+    "analyze_experiment_from_mixpanel",
+    "summarize_segments_from_mixpanel"
   ]
 }

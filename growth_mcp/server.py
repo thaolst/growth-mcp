@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from mcp.server import FastMCP
 
-from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source
+from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source, mixpanel_source
 
 mcp = FastMCP(
     "growth-mcp",
@@ -207,6 +207,70 @@ def summarize_segments_from_bigquery(
         ))
     except Exception as e:
         return _err(f"summarize_segments_from_bigquery failed: {e}")
+
+
+@mcp.tool()
+def analyze_experiment_from_mixpanel(
+    exposure_event: str,
+    conversion_event: str,
+    group_property: str,
+    from_date: str,
+    to_date: str,
+    control_label: str = "control",
+    treatment_label: str = "treatment",
+    metric_name: str = "conversion",
+) -> str:
+    """Run an A/B test analysis straight from Mixpanel events.
+
+    Requires MIXPANEL_API_SECRET env var (no extra pip dependency).
+    Exposure events assign users to groups via group_property; conversion
+    events mark who converted. Date range capped at 90 days.
+
+    Args:
+        exposure_event: Event name marking experiment exposure
+        conversion_event: Event name marking conversion
+        group_property: Event property holding the group label
+        from_date: Start date, YYYY-MM-DD
+        to_date: End date, YYYY-MM-DD
+        control_label: Property value marking the control group
+        treatment_label: Property value marking the treatment group
+        metric_name: Metric name for reporting
+    """
+    try:
+        return _ok(mixpanel_source.analyze_experiment_from_mixpanel(
+            exposure_event, conversion_event, group_property,
+            from_date, to_date, control_label, treatment_label, metric_name,
+        ))
+    except Exception as e:
+        return _err(f"analyze_experiment_from_mixpanel failed: {e}")
+
+
+@mcp.tool()
+def summarize_segments_from_mixpanel(
+    event: str,
+    segment_property: str,
+    value_property: str,
+    from_date: str,
+    to_date: str,
+) -> str:
+    """Per-segment statistics over Mixpanel events.
+
+    Requires MIXPANEL_API_SECRET env var. Useful for revenue or
+    redemption value by segment. Date range capped at 90 days.
+
+    Args:
+        event: Event name to export (1 row per event)
+        segment_property: Event property holding the segment label
+        value_property: Numeric event property to aggregate
+        from_date: Start date, YYYY-MM-DD
+        to_date: End date, YYYY-MM-DD
+    """
+    try:
+        return _ok(mixpanel_source.summarize_segments_from_mixpanel(
+            event, segment_property, value_property, from_date, to_date,
+        ))
+    except Exception as e:
+        return _err(f"summarize_segments_from_mixpanel failed: {e}")
 
 
 @mcp.tool()

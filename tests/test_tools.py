@@ -7,7 +7,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from growth_mcp.tools import campaign, retention, experiment, voucher, datasource, bigquery_source
+from growth_mcp.tools import campaign, retention, experiment, voucher, datasource, bigquery_source, mixpanel_source
 
 
 # ===========================================================================
@@ -461,3 +461,118 @@ class TestBigQueryImportHint:
         r = bigquery_source._run_query("SELECT 1")
         assert "error" in r
         assert "growth-mcp[bigquery]" in r["error"]
+
+
+# ===========================================================================
+# mixpanel_source
+# ===========================================================================
+
+def _mk_event(name, uid, **props):
+    p = {"distinct_id": uid}
+    p.update(props)
+    return {"event": name, "properties": p}
+
+
+class TestMixpanelDates:
+    def test_valid(self):
+        assert mixpanel_source._validate_dates("2026-05-01", "2026-05-31") is None
+
+    def test_bad_format(self):
+        assert "error" in mixpanel_source._validate_dates("01/05/2026", "2026-05-31")
+
+    def test_reversed(self):
+        assert "error" in mixpanel_source._validate_dates("2026-05-31", "2026-05-01")
+
+    def test_too_long(self):
+        assert "error" in mixpanel_source._validate_dates("2025-01-01", "2026-01-01")
+
+
+class TestMixpanelAuth:
+    def test_missing_secret_hint(self, monkeypatch):
+        monkeypatch.delenv("MIXPANEL_API_SECRET", raising=False)
+        r = mixpanel_source._export_events("exp", "2026-05-01", "2026-05-02")
+        assert "error" in r
+        assert "MIXPANEL_API_SECRET" in r["error"]
+
+
+class TestMixpanelExperiment:
+    def _patch_export(self, monkeypatch, exposures, conversions):
+        def fake(event, from_date, to_date):
+            if event == "exp_exposed":
+                return exposures
+            if event == "purchased":
+                return conversions if conversions else {
+                    "error": f"No '{event}' events found between {from_date} and {to_date}."
+                }
+            return {"error": "unexpected event"}
+        monkeypatch.setattr(mixpanel_source, "_export_events", fake)
+
+    def test_basic(self, monkeypatch):
+        exposures = (
+            [_mk_event("exp_exposed", f"c{i}", variant="control") for i in range(1000)]
+            + [_mk_event("exp_exposed", f"t{i}", variant="treatment") for i in range(1000)]
+        )
+        conversions = (
+            [_mk_event("purchased", f"c{i}") for i in range(100)]
+            + [_mk_event("purchased", f"t{i}") for i in range(150)]
+        )
+        self._patch_export(monkeypatch, exposures, conversions)
+        r = mixpanel_source.analyze_experiment_from_mixpanel(
+            "exp_exposed", "purchased", "variant", "2026-05-01", "2026-05-31",
+        )
+        assert "error" not in r
+        assert r["data_source"]["source"] == "mixpanel"
+        assert r["data_source"]["control"]["conversions"] == 100
+        assert r["data_source"]["treatment"]["conversions"] == 150
+        assert r["data_source"]["unique_users"] == 2000
+
+    def test_no_conversions_is_valid(self, monkeypatch):
+        exposures = (
+            [_mk_event("exp_exposed", f"c{i}", variant="control") for i in range(50)]
+            + [_mk_event("exp_exposed", f"t{i}", variant="treatment") for i in range(50)]
+        )
+        self._patch_export(monkeypatch, exposures, [])
+        r = mixpanel_source.analyze_experiment_from_mixpanel(
+            "exp_exposed", "purchased", "variant", "2026-05-01", "2026-05-31",
+        )
+        assert "error" not in r
+        assert r["data_source"]["control"]["conversions"] == 0
+
+    def test_first_exposure_wins(self, monkeypatch):
+        exposures = [
+            _mk_event("exp_exposed", "u1", variant="control"),
+            _mk_event("exp_exposed", "u1", variant="treatment"),
+            _mk_event("exp_exposed", "u2", variant="treatment"),
+        ]
+        self._patch_export(monkeypatch, exposures, [])
+        r = mixpanel_source.analyze_experiment_from_mixpanel(
+            "exp_exposed", "purchased", "variant", "2026-05-01", "2026-05-31",
+        )
+        assert r["data_source"]["control"]["sample"] == 1
+        assert r["data_source"]["treatment"]["sample"] == 1
+
+    def test_missing_group_property(self, monkeypatch):
+        exposures = [_mk_event("exp_exposed", "u1")]
+        self._patch_export(monkeypatch, exposures, [])
+        r = mixpanel_source.analyze_experiment_from_mixpanel(
+            "exp_exposed", "purchased", "variant", "2026-05-01", "2026-05-31",
+        )
+        assert "error" in r
+
+
+class TestMixpanelSegments:
+    def test_basic(self, monkeypatch):
+        events = (
+            [_mk_event("voucher_redeemed", f"a{i}", segment="active", amount=500) for i in range(4)]
+            + [_mk_event("voucher_redeemed", f"n{i}", segment="new", amount=100) for i in range(2)]
+        )
+        monkeypatch.setattr(
+            mixpanel_source, "_export_events",
+            lambda event, from_date, to_date: events,
+        )
+        r = mixpanel_source.summarize_segments_from_mixpanel(
+            "voucher_redeemed", "segment", "amount", "2026-05-01", "2026-05-31",
+        )
+        assert r["segment_count"] == 2
+        assert r["segments"]["active"]["sum"] == 2000
+        assert r["source"] == "mixpanel"
