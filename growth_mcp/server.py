@@ -5,6 +5,7 @@ from typing import Literal
 from mcp.server import FastMCP
 
 from growth_mcp.tools import campaign, retention, experiment, growth, monitor, segment, voucher, datasource, bigquery_source, mixpanel_source
+from growth_mcp import knowledge
 
 mcp = FastMCP(
     "growth-mcp",
@@ -271,6 +272,68 @@ def summarize_segments_from_mixpanel(
         ))
     except Exception as e:
         return _err(f"summarize_segments_from_mixpanel failed: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Resources: versioned, source-traced domain knowledge
+# ---------------------------------------------------------------------------
+
+@mcp.resource("growth://frameworks")
+def frameworks_resource() -> str:
+    """Growth frameworks: retention benchmarks, voucher ladder principles,
+    MEU planning structure, experiment hygiene. Versioned and source-traced."""
+    return json.dumps(knowledge.FRAMEWORKS, indent=2, ensure_ascii=False)
+
+
+@mcp.resource("growth://glossary")
+def glossary_resource() -> str:
+    """Growth marketing glossary: MEU, voucher ladder, cohort, abuse risk,
+    and other terms as used across this server's tools."""
+    return json.dumps(knowledge.GLOSSARY, indent=2, ensure_ascii=False)
+
+
+# ---------------------------------------------------------------------------
+# Prompts: workflow templates that chain this server's tools
+# ---------------------------------------------------------------------------
+
+@mcp.prompt()
+def ab_test_readout(data_location: str, metric_name: str = "conversion") -> str:
+    """Full A/B test readout workflow: analyze the data, then write a readout."""
+    return f"""Produce an A/B test readout for the experiment data at: {data_location}
+
+Workflow:
+1. If it is a CSV file, run inspect_csv first to discover the columns, then analyze_experiment_from_csv. If it is a BigQuery query, use analyze_experiment_from_bigquery. If it is Mixpanel, use analyze_experiment_from_mixpanel.
+2. Before interpreting, check the growth://frameworks resource section experiment_hygiene and verify the readout against that checklist, especially sample ratio mismatch.
+3. Write the readout with this structure: verdict in one sentence (ship, do not ship, or keep running), the numbers ({metric_name} per group, lift, p-value), what could invalidate this result, and the recommended next step.
+
+Keep the readout under 250 words. State uncertainty honestly: a non-significant result is a finding, not a failure."""
+
+
+@mcp.prompt()
+def meu_campaign_plan(meu_target: str, month: str) -> str:
+    """Build a monthly MEU campaign plan following the MEU planning framework."""
+    return f"""Build an MEU campaign plan for {month} with target: {meu_target}
+
+Workflow:
+1. Read the meu_planning framework from the growth://frameworks resource and follow its step structure.
+2. If historical data is available (CSV, BigQuery, or Mixpanel), run summarize_segments_from_* on it first: the plan must start from what the data says, not from a blank brief.
+3. Decompose the target into carryover, reactivation, and new activation, with a number for each.
+4. For each segment, assign one primary mechanic. Use suggest_voucher or optimize_voucher for voucher mechanics, and design_campaign for the overall structure.
+5. End with the weekly checkpoint metric per segment and the reserved optimization budget.
+
+Output as a plan a growth manager could execute, not a strategy essay."""
+
+
+@mcp.prompt()
+def voucher_design_review(segment: str) -> str:
+    """Review a voucher design against ladder principles and abuse risk."""
+    return f"""Review the voucher design for segment: {segment}
+
+Workflow:
+1. Read voucher_ladder_principles from the growth://frameworks resource.
+2. If concrete numbers are available (AOV, budget per user, target lift), run optimize_voucher and compare the proposed design against its output, especially the abuse_risk level.
+3. Check each principle explicitly: tier 1 anchor vs AOV, top tier stretch, percentage cap, budget-to-AOV ratio.
+4. Conclude with: approve, approve with changes (list them), or redesign (explain which principle is violated)."""
 
 
 @mcp.tool()

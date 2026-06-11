@@ -165,6 +165,18 @@ export MIXPANEL_API_SECRET=your_secret
 
 Khoảng thời gian export giới hạn 90 ngày, 200K event.
 
+## Knowledge layer (prompts + resources)
+
+Ngoài tools, server còn đóng gói domain knowledge theo chuẩn MCP, mỗi entry có version và source trace (field = từ campaign thật, standard = chuẩn ngành):
+
+| Loại | Tên | Nội dung |
+|---|---|---|
+| Resource | `growth://frameworks` | Retention benchmark theo tuần, nguyên tắc voucher ladder, cấu trúc lập kế hoạch MEU, checklist experiment hygiene |
+| Resource | `growth://glossary` | Thuật ngữ growth dùng xuyên suốt các tool: MEU, voucher ladder, cohort, abuse risk |
+| Prompt | `ab_test_readout` | Workflow đọc kết quả test: phân tích data, check hygiene checklist, viết readout dưới 250 từ |
+| Prompt | `meu_campaign_plan` | Lập kế hoạch MEU tháng: decompose target, đọc data trước, gán mechanic theo segment |
+| Prompt | `voucher_design_review` | Review thiết kế voucher theo từng nguyên tắc ladder kèm abuse risk |
+
 ## Giới hạn
 
 Các tool phân tích nhận data qua tham số hoặc qua data layer CSV (`*_from_csv`). Đã hỗ trợ CSV, BigQuery và Mixpanel. Nguồn khác thì export ra CSV rồi phân tích. Giúp **tư duy nhanh hơn**, không thay thế data analyst.
@@ -331,6 +343,18 @@ export MIXPANEL_API_SECRET=your_secret
 ```
 
 Export window capped at 90 days, 200K events.
+
+## Knowledge layer (prompts + resources)
+
+Beyond tools, the server packages domain knowledge through standard MCP primitives. Every entry is versioned and source-traced (field = distilled from real campaigns, standard = industry methodology):
+
+| Type | Name | Content |
+|---|---|---|
+| Resource | `growth://frameworks` | Weekly retention benchmarks, voucher ladder principles, MEU planning structure, experiment hygiene checklist |
+| Resource | `growth://glossary` | Growth terms used across the tools: MEU, voucher ladder, cohort, abuse risk |
+| Prompt | `ab_test_readout` | Test readout workflow: analyze the data, check the hygiene checklist, write a readout under 250 words |
+| Prompt | `meu_campaign_plan` | Monthly MEU planning: decompose the target, read data first, assign mechanics per segment |
+| Prompt | `voucher_design_review` | Review a voucher design against each ladder principle with abuse risk |
 
 ## Limitations
 

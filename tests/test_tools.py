@@ -576,3 +576,50 @@ class TestMixpanelSegments:
         assert r["segment_count"] == 2
         assert r["segments"]["active"]["sum"] == 2000
         assert r["source"] == "mixpanel"
+
+
+# ===========================================================================
+# knowledge layer (resources + prompts)
+# ===========================================================================
+
+import asyncio
+from growth_mcp import knowledge
+import growth_mcp.server as server_mod
+
+
+class TestKnowledge:
+    def test_all_frameworks_versioned_and_sourced(self):
+        for name, fw in knowledge.FRAMEWORKS["frameworks"].items():
+            assert "version" in fw, name
+            assert fw["source"] in ("field", "standard"), name
+            assert "summary" in fw, name
+
+    def test_glossary_has_core_terms(self):
+        for term in ("MEU", "voucher ladder", "cohort", "abuse risk"):
+            assert term in knowledge.GLOSSARY["terms"]
+
+
+class TestServerKnowledgeLayer:
+    def test_resources_registered(self):
+        uris = {str(r.uri) for r in asyncio.run(server_mod.mcp.list_resources())}
+        assert "growth://frameworks" in uris
+        assert "growth://glossary" in uris
+
+    def test_frameworks_resource_is_valid_json(self):
+        import json as _json
+        content = asyncio.run(server_mod.mcp.read_resource("growth://frameworks"))
+        text = content[0].content if hasattr(content[0], "content") else str(content)
+        data = _json.loads(text)
+        assert "frameworks" in data
+
+    def test_prompts_registered(self):
+        names = {p.name for p in asyncio.run(server_mod.mcp.list_prompts())}
+        assert {"ab_test_readout", "meu_campaign_plan", "voucher_design_review"} <= names
+
+    def test_prompt_renders_with_args(self):
+        result = asyncio.run(server_mod.mcp.get_prompt(
+            "ab_test_readout", {"data_location": "/tmp/test.csv"}
+        ))
+        text = result.messages[0].content.text
+        assert "/tmp/test.csv" in text
+        assert "inspect_csv" in text
