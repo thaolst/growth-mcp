@@ -735,3 +735,56 @@ class TestBalanceHealth:
     def test_invalid_input(self):
         assert "error" in loyalty.analyze_balance_health([])
         assert "error" in loyalty.analyze_balance_health([{"segment": "x"}])
+
+
+# ===========================================================================
+# integration: goi tool qua lop MCP server (khong chi pure function)
+# ===========================================================================
+
+class TestServerIntegration:
+    @staticmethod
+    def _text(result):
+        """FastMCP call_tool co the tra (content_list, raw) hoac content_list tuy version."""
+        content = result[0] if isinstance(result, tuple) else result
+        if isinstance(content, list):
+            content = content[0]
+        return content.text
+    def test_call_tool_via_server(self):
+        result = asyncio.run(server_mod.mcp.call_tool(
+            "optimize_voucher",
+            {"avg_order_value_vnd": 150000, "target_conversion_lift_pct": 20,
+             "budget_per_user_vnd": 15000},
+        ))
+        text = self._text(result)
+        assert "voucher_ladder" in text
+        assert "abuse_risk" in text
+
+    def test_call_csv_tool_via_server(self, tmp_path):
+        p = tmp_path / "ab.csv"
+        rows = ["group,converted"]
+        rows += ["control,1"] * 80 + ["control,0"] * 920
+        rows += ["treatment,1"] * 120 + ["treatment,0"] * 880
+        p.write_text("\n".join(rows))
+        result = asyncio.run(server_mod.mcp.call_tool(
+            "analyze_experiment_from_csv",
+            {"file_path": str(p), "group_col": "group", "converted_col": "converted"},
+        ))
+        assert "p_value" in self._text(result)
+
+    def test_error_path_via_server(self):
+        result = asyncio.run(server_mod.mcp.call_tool(
+            "inspect_csv", {"file_path": "/nonexistent.csv"},
+        ))
+        assert "error" in self._text(result).lower()
+
+    def test_sample_datasets_run_clean(self):
+        import os
+        base = os.path.join(os.path.dirname(__file__), "..", "examples")
+        if not os.path.isdir(base):
+            return
+        r = datasource.analyze_experiment_from_csv(
+            os.path.join(base, "ab_test_raw.csv"), "group", "converted")
+        assert "error" not in r
+        r = datasource.analyze_retention_from_csv(
+            os.path.join(base, "retention_weekly.csv"), "period", "active_users")
+        assert "error" not in r

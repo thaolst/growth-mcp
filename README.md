@@ -79,6 +79,10 @@ cd growth-mcp
 pip install -e .
 ```
 
+## Chạy thử trong 5 phút
+
+Folder [`examples/`](./examples) có 4 bộ data tổng hợp kèm walkthrough với output thật của từng layer: A/B test, retention cohort, segment stats, redemption elasticity theo segment.
+
 ## Dùng với Claude Desktop
 
 Thêm vào config file:
@@ -263,6 +267,10 @@ git clone https://github.com/thaolst/growth-mcp.git
 cd growth-mcp
 pip install -e .
 ```
+
+## Try it in 5 minutes
+
+The [`examples/`](./examples) folder has 4 synthetic datasets with a walkthrough showing real output from every layer: A/B test, retention cohort, segment stats, per-segment redemption elasticity.
 
 ## Use with Claude Desktop
 
