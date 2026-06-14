@@ -272,6 +272,10 @@ pip install -e .
 
 The [`examples/`](./examples) folder has 4 synthetic datasets with a walkthrough showing real output from every layer: A/B test, retention cohort, segment stats, per-segment redemption elasticity.
 
+## Connect real data
+
+Full guide at [`docs/connect-real-data.md`](./docs/connect-real-data.md): setup for each layer (CSV, BigQuery, Mixpanel), SQL examples for fintech/e-commerce SEA workflows, and common error handling.
+
 ## Use with Claude Desktop
 
 Add to your config file:
