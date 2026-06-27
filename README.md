@@ -12,6 +12,26 @@
 
 # Tiếng Việt
 
+## 🚀 Web UI (New)
+
+Use growth-mcp tools **directly in your browser** — no CLI, no MCP client needed.
+
+```bash
+cd streamlit_app
+pip install -r requirements.txt
+streamlit run main.py
+```
+
+Then open `http://localhost:8501`.
+
+**Available tools:**
+- 📊 **Retention Analyzer** — upload cohort CSV → retention analysis + intervention recommendations
+- 📝 **Campaign Brief Generator** *(coming soon)*
+- 🎫 **Voucher Designer** *(coming soon)*
+- 🧪 **A/B Test Analyzer** *(coming soon)*
+
+Data stays local — nothing uploaded to any server.
+
 ## Giải quyết vấn đề gì?
 
 Growth PM thường mất thời gian làm đi làm lại các phân tích lặp: tính drop rate từ cohort data, nhớ intervention nào phù hợp budget nào, tra công thức sample size, design voucher theo segment...

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0] - 2026-06-27
+
+### Added
+- **Streamlit Web UI** — `streamlit_app/` with browser-based tools for marketers
+- **Retention Analyzer page** — upload cohort CSV, analyze retention drops, get intervention recommendations
+- **Home page** — tool overview with sidebar navigation
+
+### Changed
+- **README** — added Web UI section with setup instructions
+
 ## [1.0.0] - 2026-06-13
 
 First stable release. The API of all 25 tools, 3 prompts, and 2 resources is now considered stable: breaking changes will bump the major version.
