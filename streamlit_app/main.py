@@ -20,7 +20,7 @@ with st.sidebar:
 
     st.page_link("main.py", label="🏠 Home", use_container_width=True)
     st.page_link("pages/retention_analyzer.py", label="📊 Retention Analyzer", use_container_width=True)
-    st.page_link("pages/campaign_brief.py", label="📝 Campaign Brief Generator", use_container_width=True, disabled=True)
+    st.page_link("pages/campaign_brief.py", label="📝 Campaign Brief Generator", use_container_width=True)
     st.page_link("pages/voucher_designer.py", label="🎫 Voucher Designer", use_container_width=True, disabled=True)
     st.page_link("pages/experiment_analyzer.py", label="🧪 A/B Test Analyzer", use_container_width=True, disabled=True)
 
@@ -56,7 +56,7 @@ st.markdown("### 🚀 Available Tools")
 
 tools = [
     ("📊 Retention Analyzer", "Upload cohort CSV → analyze retention drops → get intervention recommendations", "✅ Active"),
-    ("📝 Campaign Brief Generator", "Coming soon — input goal+budget → complete campaign brief", "⏳ Building"),
+    ("📝 Campaign Brief Generator", "Input goal+budget+segment → complete campaign brief + voucher suggestion", "✅ Active"),
     ("🎫 Voucher Designer", "Coming soon — design voucher mechanics for any segment", "⏳ Planned"),
     ("🧪 A/B Test Analyzer", "Coming soon — upload experiment CSV → significance test", "⏳ Planned"),
 ]

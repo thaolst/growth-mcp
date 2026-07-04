@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0] - 2026-07-04
+
+### Added
+- **Campaign Brief Generator page** — input campaign objective + segment + budget level → complete brief with voucher suggestion
+- **Home page** — updated tool status showing 2 active tools
+
+### Changed
+- **README** — updated Web UI section with Campaign Brief Generator
+
 ## [1.2.0] - 2026-06-27
 
 ### Added

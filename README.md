@@ -26,7 +26,7 @@ Then open `http://localhost:8501`.
 
 **Available tools:**
 - 📊 **Retention Analyzer** — upload cohort CSV → retention analysis + intervention recommendations
-- 📝 **Campaign Brief Generator** *(coming soon)*
+- 📝 **Campaign Brief Generator** — input goal + budget + segment → complete campaign brief + voucher
 - 🎫 **Voucher Designer** *(coming soon)*
 - 🧪 **A/B Test Analyzer** *(coming soon)*
 
