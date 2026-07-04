@@ -1,0 +1,30 @@
+{
+  "id": "camp-2025-03-weekend-cashback",
+  "name": "Weekend Cashback Campaign",
+  "objective": "boost weekend GMV",
+  "segment": "active",
+  "budget_level": "S",
+  "budget": "40M VND",
+  "channels": ["in-app push", "in-app banner"],
+  "voucher": {
+    "type": "cashback",
+    "value": "10% cashback up to 50K",
+    "min_spend": "200K",
+    "expiry": "72 hours"
+  },
+  "result": "success",
+  "metrics": {
+    "reach": "120K users",
+    "conversion_rate": "8.2%",
+    "ROI": "3.2x",
+    "GMV_impact": "+15% weekend GMV"
+  },
+  "learnings": [
+    "Push notification open rate cao nhất vào 9-10h sáng Thứ 7",
+    "Cashback 10% up to 50K đủ hấp dẫn cho active users",
+    "Min spend 200K filter được users không có ý định mua"
+  ],
+  "failures_to_avoid": [],
+  "date": "2025-03-15",
+  "duration": "2 weeks"
+}

@@ -1,0 +1,35 @@
+{
+  "id": "camp-2025-06-highspender-freebie",
+  "name": "High Spender Free Gift Campaign",
+  "objective": "retain high spenders with free gift",
+  "segment": "high_spender",
+  "budget_level": "M",
+  "budget": "150M VND",
+  "channels": ["in-app banner", "SMS", "Zalo OA"],
+  "voucher": {
+    "type": "free_item",
+    "value": "Free premium item on min spend 1M",
+    "min_spend": "1M",
+    "expiry": "7 days"
+  },
+  "result": "fail",
+  "metrics": {
+    "reach": "8K users",
+    "conversion_rate": "1.2%",
+    "ROI": "0.3x",
+    "note": "Campaign achieved only 30% of target conversions"
+  },
+  "fail_reasons": [
+    "Min spend 1M quá cao cho free item — high spenders không thấy giá trị",
+    "Channel SMS không hiệu quả cho high spender segment (open rate thấp)",
+    "Free item không đúng insight: high spender muốn status/vip hơn là quà miễn phí",
+    "Thời gian campaign trùng với các campaign cashback khác, gây nhiễu"
+  ],
+  "learnings": [
+    "High spender respond tốt hơn với exclusive access hơn là free item",
+    "Zalo OA là channel hiệu quả nhất cho segment này (CTR 4.5%)",
+    "Cần A/B test voucher value trước khi scale"
+  ],
+  "date": "2025-06-01",
+  "duration": "3 weeks"
+}
