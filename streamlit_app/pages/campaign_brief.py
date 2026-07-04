@@ -116,10 +116,12 @@ if generate:
             )
 
             # Generate voucher suggestion
+            # suggest_voucher only supports S and M budget levels
+            voucher_budget = "M" if budget_level == "L" else budget_level
             voucher = suggest_voucher(
                 segment=segment,
                 objective=objective[:50],
-                budget_level=budget_level,
+                budget_level=voucher_budget,
             )
 
             st.balloons()
@@ -162,14 +164,19 @@ if generate:
             st.subheader("🎫 Suggested Voucher")
 
             if "error" not in voucher:
+                # Voucher result has nested structure: {segment, objective, suggested_voucher: {type, value, ...}}
+                v = voucher.get("suggested_voucher", voucher)
                 with st.container(border=True):
                     cols = st.columns(2)
                     with cols[0]:
-                        st.markdown(f"**Type:** {voucher.get('type', '—')}")
-                        st.markdown(f"**Value:** {voucher.get('value', '—')}")
+                        st.markdown(f"**Type:** {v.get('type', '—')}")
+                        st.markdown(f"**Value:** {v.get('value', '—')}")
                     with cols[1]:
-                        st.markdown(f"**Min spend:** {voucher.get('min_spend', '—')}")
-                        st.markdown(f"**Expiry:** {voucher.get('expiry', '—')}")
+                        st.markdown(f"**Min spend:** {v.get('min_spend', '—')}")
+                        st.markdown(f"**Expiry:** {v.get('expiry', '—')}")
+                voucher_note = voucher.get("note")
+                if voucher_note:
+                    st.caption(f"📝 {voucher_note}")
             else:
                 st.info(f"No voucher suggestion available: {voucher.get('error', '')}")
 
